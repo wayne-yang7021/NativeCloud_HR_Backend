@@ -1,0 +1,24 @@
+# Go 相關
+bin/
+pkg/
+*.exe
+*.out
+*.test
+*.log
+
+# 環境變數
+.env
+
+# 依賴管理
+go.sum
+
+# 編譯產物
+*.o
+*.a
+*.so
+
+# IDE 相關
+.vscode/
+.idea/
+.DS_Store
+
