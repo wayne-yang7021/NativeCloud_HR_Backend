@@ -5,11 +5,11 @@ import (
 	"log"
 	"net/http"
 
-	"NativeCloud_HR/config"
-	"NativeCloud_HR/internal/api"
-	"NativeCloud_HR/internal/db"
-	"NativeCloud_HR/internal/events"
-	"NativeCloud_HR/internal/utils"
+	"github.com/4040www/NativeCloud_HR/config"
+	"github.com/4040www/NativeCloud_HR/internal/api"
+	"github.com/4040www/NativeCloud_HR/internal/db"
+	"github.com/4040www/NativeCloud_HR/internal/events"
+	"github.com/4040www/NativeCloud_HR/internal/utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -26,13 +26,15 @@ func main() {
 
 	// 連接資料庫
 	db.InitPostgres(cfg.DatabaseURL)
-	db.InitRedis(cfg.RedisURL)
+	// db.InitRedis(cfg.RedisURL)
+
+	// message queue 相關
 
 	// 初始化 Kafka
-	kafkaBrokers := []string{"localhost:9092"}
-	kafkaTopic := "access_logs"
-	events.InitKafkaProducer(kafkaBrokers, kafkaTopic)
-	go events.StartKafkaConsumer(kafkaBrokers, kafkaTopic, "access_group")
+	// kafkaBrokers := []string{"localhost:9092"}
+	// kafkaTopic := "access_logs"
+	// events.InitKafkaProducer(kafkaBrokers, kafkaTopic)
+	// go events.StartKafkaConsumer(kafkaBrokers, kafkaTopic, "access_group")
 
 	// // 初始化 NATS
 	// natsURL := "nats://localhost:4222"
