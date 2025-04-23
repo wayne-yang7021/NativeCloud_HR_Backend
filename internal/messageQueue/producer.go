@@ -1,4 +1,4 @@
-package events
+package messagequeue
 
 import (
 	"log"
@@ -37,7 +37,6 @@ func SendCardEvent(employeeID string, action string, timestamp time.Time) error 
 	log.Printf("已發送 Kafka 訊息: 員工 %s %s @ %s", employeeID, action, timestamp)
 	return nil
 }
-
 
 // NATS 版本
 

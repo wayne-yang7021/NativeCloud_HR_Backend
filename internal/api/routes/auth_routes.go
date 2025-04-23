@@ -1,13 +1,13 @@
 package routes
 
 import (
-    "github.com/gin-gonic/gin"
-    "NativeCloud_HR/api/handlers"
+	handlers "github.com/4040www/NativeCloud_HR/internal/api/handler"
+	"github.com/gin-gonic/gin"
 )
 
-func RegisterRoutes(auth *gin.RouterGroup) {
+func RegisterAuthRoutes(auth *gin.RouterGroup) {
 
-    auth.POST("/login", handlers.LoginHandler)
-    auth.POST("/logout", handlers.LogoutHandler)
+	auth.POST("/login", handlers.LoginHandler)
+	auth.POST("/logout", handlers.LogoutHandler)
 
 }

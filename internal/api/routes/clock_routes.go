@@ -1,14 +1,14 @@
 package routes
 
 import (
-    "github.com/gin-gonic/gin"
-    "NativeCloud_HR/api/handlers"
+	handlers "github.com/4040www/NativeCloud_HR/internal/api/handler"
+	"github.com/gin-gonic/gin"
 )
 
-func RegisterRoutes(clock *gin.RouterGroup) {
+func RegisterClockRoutes(clock *gin.RouterGroup) {
 
-    clock.POST("/", handlers.CheckIn)             // POST /clock
-    clock.GET("/", handlers.GetMyRecords)         // GET /clock
-    clock.GET("/summary", handlers.MonthlySummary) // GET /clock/summary
-    
+	clock.POST("/", handlers.CheckIn)              // POST /clock
+	clock.GET("/", handlers.GetMyRecords)          // GET /clock
+	clock.GET("/summary", handlers.MonthlySummary) // GET /clock/summary
+
 }

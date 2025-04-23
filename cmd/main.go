@@ -8,8 +8,6 @@ import (
 	"github.com/4040www/NativeCloud_HR/config"
 	"github.com/4040www/NativeCloud_HR/internal/api"
 	"github.com/4040www/NativeCloud_HR/internal/db"
-	"github.com/4040www/NativeCloud_HR/internal/events"
-	"github.com/4040www/NativeCloud_HR/internal/utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -22,14 +20,12 @@ func main() {
 	}
 
 	// 初始化日誌
-	utils.InitLogger()
+	// utils.InitLogger()
 
 	// 連接資料庫
-	db.InitPostgres(cfg.DatabaseURL)
-	// db.InitRedis(cfg.RedisURL)
+	db.InitPostgres()
 
 	// message queue 相關
-
 	// 初始化 Kafka
 	// kafkaBrokers := []string{"localhost:9092"}
 	// kafkaTopic := "access_logs"
@@ -46,7 +42,7 @@ func main() {
 	api.SetupRoutes(router)
 
 	// 啟動 HTTP 伺服器
-	serverAddr := fmt.Sprintf(":%d", cfg.ServerPort)
+	serverAddr := fmt.Sprintf(":%d", cfg.Database.Port)
 	log.Printf("伺服器啟動於 %s", serverAddr)
 	if err := http.ListenAndServe(serverAddr, router); err != nil {
 		log.Fatalf("伺服器啟動失敗: %v", err)
