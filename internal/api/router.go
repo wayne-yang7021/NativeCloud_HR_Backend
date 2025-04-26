@@ -9,9 +9,9 @@ import (
 
 // modularized api router
 func SetupRoutes(r *gin.Engine) {
-	api := r.Group("/api")
+	apiGroup := r.Group("/api")
 
-	api.GET("/status", func(c *gin.Context) {
+	apiGroup.GET("/status", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"status":    "online",
 			"timestamp": time.Now(),
@@ -19,8 +19,12 @@ func SetupRoutes(r *gin.Engine) {
 		})
 	})
 
-	routes.RegisterAuthRoutes(api.Group("/auth"))
-	routes.RegisterClockRoutes(api.Group("/clock"))
-	routes.RegisterNotifyRoutes(api.Group("/notify"))
-	routes.RegisterReportRoutes(api.Group("/report"))
+	routes.RegisterAuthRoutes(apiGroup.Group("/auth"))
+
+	protected := apiGroup.Group("/")
+	protected.Use(JWTMiddleware())
+
+	routes.RegisterClockRoutes(protected.Group("/clock"))
+	routes.RegisterNotifyRoutes(protected.Group("/notify"))
+	routes.RegisterReportRoutes(protected.Group("/report"))
 }
