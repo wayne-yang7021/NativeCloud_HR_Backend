@@ -1,37 +1,36 @@
 package db
 
 import (
-	"database/sql"
 	"fmt"
+	"log"
+	"os"
 
-	_ "github.com/lib/pq"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
-var db *sql.DB
+var DB *gorm.DB
 
-// InitDB 初始化資料庫連接
-func InitDB(connStr string) error {
+func InitPostgres() {
+	// 從環境變數讀取（建議，不要寫死）
+	host := os.Getenv("DB_HOST")
+	user := os.Getenv("DB_USER")
+	password := os.Getenv("DB_PASSWORD")
+	dbname := os.Getenv("DB_NAME")
+	port := os.Getenv("DB_PORT") // 通常是 5432
+
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Taipei",
+		host, user, password, dbname, port)
+
 	var err error
-	db, err = sql.Open("postgres", connStr)
+	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		return fmt.Errorf("連接資料庫失敗: %w", err)
+		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
-	db.SetMaxOpenConns(10)
-	db.SetMaxIdleConns(5)
-
-	err = db.Ping()
-	if err != nil {
-		return fmt.Errorf("資料庫連線測試失敗: %w", err)
-	}
-
-	return nil
+	log.Println("✅ Connected to PostgreSQL")
 }
 
-// CloseDB 關閉資料庫連接
-func CloseDB() error {
-	if db != nil {
-		return db.Close()
-	}
-	return nil
+func GetDB() *gorm.DB {
+	return DB
 }
