@@ -36,7 +36,7 @@ func LoadConfig() (*Config, error) {
 	_ = godotenv.Load()
 
 	// 2. 讀取 YAML 設定檔
-	data, err := os.ReadFile("config.yaml")
+	data, err := os.ReadFile("config/config.yaml")
 	if err != nil {
 		return nil, err
 	}
