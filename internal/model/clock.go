@@ -1,12 +1,10 @@
 package model
 
-import "time"
-
-type CheckinRecord struct {
-	ID        uint      `json:"id"`
-	UserID    uint      `json:"user_id"`
-	CheckinAt time.Time `json:"checkin_at"`
-	SiteClass string    `json:"site_class"` // A, B, C...
-	Site      string    `json:"site"`       // 儲位名稱
-	Note      string    `json:"note"`       // optional: 上班/下班
+type CheckInRequest struct {
+	ID        string `json:"access_id" binding:"required"`
+	UserID    string `json:"user_id" binding:"required"`
+	Time      string `json:"access_time" binding:"required"`
+	Direction string `json:"direction" binding:"required"` // 進或出
+	Gate_type string `json:"gate_type" binding:"required"`
+	CheckinAt string `json:"gate_name" binding:"required"`
 }

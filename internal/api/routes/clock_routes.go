@@ -7,8 +7,6 @@ import (
 
 func RegisterClockRoutes(clock *gin.RouterGroup) {
 
-	clock.POST("/", handlers.CheckIn)              // POST /clock
-	clock.GET("/", handlers.GetMyRecords)          // GET /clock
-	clock.GET("/summary", handlers.MonthlySummary) // GET /clock/summary
+	clock.POST("/", handlers.CheckIn) // POST /clock
 
 }
