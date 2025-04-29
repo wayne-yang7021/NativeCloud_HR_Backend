@@ -13,18 +13,18 @@ func AuthenticateUser(email, password string) (*model.User, string, error) {
 	// 查找使用者
 	user, err := repository.FindUserByEmail(email)
 	if err != nil || user == nil {
-		return nil, "", errors.New("User not found")
+		return nil, "", errors.New("user not found")
 	}
 
 	// 檢查密碼
 	if !utils.CheckPasswordHash(password, user.PasswordHash) {
-		return nil, "", errors.New("Invalid credentials")
+		return nil, "", errors.New("invalid credentials")
 	}
 
 	// 產生 JWT token
 	token, err := utils.GenerateJWT(user)
 	if err != nil {
-		return nil, "", errors.New("Failed to generate token")
+		return nil, "", errors.New("failed to generate token")
 	}
 
 	return user, token, nil

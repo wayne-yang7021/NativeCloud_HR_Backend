@@ -5,10 +5,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterNotifyRoutes(notify *gin.RouterGroup) {
-
-	notify.GET("/warning", handlers.OvertimeOrLateCheck)      // GET /notify/warning
-	notify.POST("/late", handlers.NotifyManagerTooManyLate)   // POST /notify/late
-	notify.POST("/overtime", handlers.NotifyHRExceedOvertime) // POST /notify/overtime
-
+func RegisterNotifyRoutes(router *gin.RouterGroup) {
+	notify := router.Group("/notify")
+	{
+		notify.GET("/warning", handlers.OvertimeOrLateCheck)
+		notify.POST("/late", handlers.NotifyManagerTooManyLate)
+		notify.POST("/overtime", handlers.NotifyHRExceedOvertime)
+	}
 }

@@ -1,3 +1,4 @@
+// report_routes.go
 package routes
 
 import (
@@ -5,10 +6,18 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterReportRoutes(report *gin.RouterGroup) {
+func RegisterReportRoutes(router *gin.RouterGroup) {
+	report := router.Group("/report")
+	{
+		report.GET("/myRecords/:userID", handlers.GetMyTodayRecords)
+		report.GET("/historyRecords/:userID", handlers.GetMyHistoryRecords)
+		report.GET("/historyRecords/:userID/:startDate-:endDate", handlers.GetMyPeriodRecords)
+		report.GET("/thisMonth/:department/:userID", handlers.GetThisMonthTeam)
+		report.GET("/thisWeek/:department/:userID", handlers.GetThisWeekTeam)
+		report.GET("/PeriodTime/:department/:startDate-:endDate/:userID", handlers.GetCustomPeriodTeam)
+		report.GET("/filterAttendence", handlers.FilterAttendance)
+		report.GET("/exportAttendenceCSV", handlers.ExportAttendanceCSV)
+		report.GET("/exportAttendencePDF", handlers.ExportAttendancePDF)
 
-	report.GET("/me", handlers.GenerateMyReport)           // GET /report/me
-	report.GET("/department", handlers.GenerateDeptReport) // GET /report/department
-	report.GET("/today", handlers.GetTodayRecords)         // GET /report/today
-
+	}
 }
