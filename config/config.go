@@ -31,6 +31,16 @@ type Config struct {
 	}
 }
 
+type KafkaConfig struct {
+	Brokers []string
+	Topic   string
+}
+
+var Kafka = KafkaConfig{
+	Brokers: []string{"localhost:9092"},
+	Topic:   "clock-records",
+}
+
 func LoadConfig() (*Config, error) {
 	// 1. 載入 .env
 	_ = godotenv.Load()

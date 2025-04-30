@@ -1,12 +1,10 @@
 package service
 
 import (
+	messagequeue "github.com/4040www/NativeCloud_HR/internal/messageQueue"
 	"github.com/4040www/NativeCloud_HR/internal/model"
-	"github.com/4040www/NativeCloud_HR/internal/repository"
 )
 
 func Clock(req *model.CheckInRequest) error {
-
-	return repository.CreateCheckinRecord(req)
-
+	return messagequeue.SendCheckIn(req)
 }
