@@ -205,7 +205,7 @@ database:
 messageQueue:
   type: "kafka"
   brokers:
-    - "localhost:9092"
+    - "kafka:9092"
 ```
 
 ### 4.3 加載配置

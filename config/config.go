@@ -37,16 +37,20 @@ type KafkaConfig struct {
 }
 
 var Kafka = KafkaConfig{
-	Brokers: []string{"localhost:9092"},
+	Brokers: []string{"kafka:9092"},
 	Topic:   "clock-records",
 }
 
 func LoadConfig() (*Config, error) {
-	// 1. 載入 .env
-	_ = godotenv.Load()
 
-	// 2. 讀取 YAML 設定檔
-	data, err := os.ReadFile("config/config.yaml")
+	// 載入 .env 檔案
+	err := godotenv.Load("/app/config/.env")
+	if err != nil {
+		fmt.Println("載入 .env 檔案失敗:", err)
+	}
+
+	// 讀取 config.yaml 設定檔
+	data, err := os.ReadFile("/app/config/config.yaml")
 	if err != nil {
 		return nil, err
 	}

@@ -1,5 +1,5 @@
 # 第一階段: 建置 Go 二進位檔
-FROM golang:1.21 AS builder
+FROM golang:1.23 AS builder
 
 # 設定工作目錄
 WORKDIR /app
@@ -30,10 +30,10 @@ FROM gcr.io/distroless/base-debian11
 WORKDIR /root/
 
 # 複製已編譯的 Go 執行檔
-COPY --from=builder /app/native-cloud-hr /app/native-cloud-hr
+COPY --from=builder /app/native-cloud-hr ./native-cloud-hr
 
 # 設定環境變數（確保應用程式讀取 GCP 服務帳戶）
-ENV GOOGLE_APPLICATION_CREDENTIALS="/root/gcp-service-account.json"
+# ENV GOOGLE_APPLICATION_CREDENTIALS="/root/gcp-service-account.json"
 
 # 開放必要的 Port（假設 API 運行於 8080）
 EXPOSE 8080

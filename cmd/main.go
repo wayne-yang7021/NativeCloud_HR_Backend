@@ -28,7 +28,7 @@ func main() {
 
 	// message queue 相關
 	// 初始化 Kafka
-	brokers := "localhost:9092" // 你 Kafka 的 broker 位址
+	brokers := "kafka:9092" // 你 Kafka 的 broker 位址
 	if err := messagequeue.InitKafka(brokers); err != nil {
 		log.Fatalf("failed to init kafka: %v", err)
 	}
@@ -41,7 +41,7 @@ func main() {
 	api.SetupRoutes(router)
 
 	// 啟動 HTTP 伺服器
-	serverAddr := fmt.Sprintf(":%d", cfg.Database.Port)
+	serverAddr := fmt.Sprintf(":%d", cfg.Server.Port)
 	log.Printf("伺服器啟動於 %s", serverAddr)
 	if err := http.ListenAndServe(serverAddr, router); err != nil {
 		log.Fatalf("伺服器啟動失敗: %v", err)

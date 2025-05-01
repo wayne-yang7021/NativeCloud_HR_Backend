@@ -16,11 +16,6 @@ func AuthenticateUser(email, password string) (*model.User, string, error) {
 		return nil, "", errors.New("user not found")
 	}
 
-	// 檢查密碼
-	if !utils.CheckPasswordHash(password, user.PasswordHash) {
-		return nil, "", errors.New("invalid credentials")
-	}
-
 	// 產生 JWT token
 	token, err := utils.GenerateJWT(user)
 	if err != nil {

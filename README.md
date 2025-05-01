@@ -18,95 +18,124 @@
 │   ├── 📝 main.go          # 主要執行程式
 │── 📂 config               # 設定檔
 │   ├── 📝 config.go        # 設定加載邏輯
-│   ├── 📝 config.yaml      # 設定檔案 (GCP, DB, Kafka, NATS 連線)
+│   ├── 📝 config.yaml      # 設定檔案 (GCP, DB, Kafka 連線)
+│   ├── 📝 .env             # 環境變數
 │── 📂 internal             # 核心業務邏輯
 │   ├── 📂 api              # API 層
-│   │   ├── 📝 handlers.go  # HTTP 請求處理
-│   │   ├── 📝 middleware.go# 身分驗證、日誌等中介軟體
+│   │   ├── 📂 handlers.go  # HTTP 請求處理
+│   │   │   ├── 📝 auth.go      # 身分驗證
+│   │   │   ├── 📝 clock.go     # 打卡
+│   │   │   ├── 📝 notify.go    # 提醒通知
+│   │   │   ├── 📝 report.go    # 報表生成
+│   │   ├── 📂 routes.go  # HTTP 請求處理
+│   │   │   ├── 📝 auth_routes.go      # 身分驗證路徑
+│   │   │   ├── 📝 clock_routes.go     # 打卡路徑
+│   │   │   ├── 📝 notify_routes.go    # 提醒通知路徑
+│   │   │   ├── 📝 report_routes.go    # 報表生成路徑
+│   │   ├── 📝 middleware.go# 身分驗證中介軟體
 │   │   ├── 📝 router.go    # 設定 API 路由 (Echo/Gin)
-│   ├── 📂 service          # 服務層（業務邏輯）
-│   │   ├── 📝 access.go    # 員工刷卡業務邏輯
-│   │   ├── 📝 report.go    # 報表分析邏輯
-│   │   ├── 📝 auth.go      # 員工登入驗證邏輯
-│   ├── 📂 repository       # 資料存取層
-│   │   ├── 📝 employee.go  # 員工資料存取
-│   │   ├── 📝 attendance.go# 考勤數據存取
 │   ├── 📂 db               # 資料庫初始化
 │   │   ├── 📝 postgres.go  # PostgreSQL 連線
-│   │   ├── 📝 redis.go     # Redis 快取連線
-│   ├── 📂 auth             # 身分驗證模組
-│   │   ├── 📝 jwt.go       # JWT Token 相關邏輯
-│   │   ├── 📝 oauth.go     # OAuth 2.0 整合 (Google Workspace, AD)
-│   ├── 📂 utils            # 通用工具
-│   │   ├── 📝 logger.go    # 日誌系統
-│   │   ├── 📝 response.go  # API 回應格式
 │   ├── 📂 messageQueue     # 負責消息隊列操作
 │   │   ├── 📝 kafka.go     # Kafka 配置與生產者
-│   │   ├── 📝 nats.go      # NATS 配置與生產者
 │   │   ├── 📝 producer.go  # 發送消息的生產者
 │   │   ├── 📝 consumer.go  # 接收消息的消費者
-│   ├── 📂 events           # 事件處理邏輯
-│   │   ├── 📝 eventHandler.go # 事件處理邏輯
-│   │   ├── 📝 eventProcessor.go # 處理事件順序、優先級、並發限制等
+│   ├── 📂 repository       # 資料存取層
+│   │   │   ├── 📝 user_repo.go      # 身分驗證數據存取
+│   │   │   ├── 📝 clock_repo.go     # 打卡數據存取
+│   │   │   ├── 📝 notify_repo.go    # 提醒通知數據存取
+│   │   │   ├── 📝 report_repo.go    # 報表生成數據存取
+│   ├── 📂 service          # 服務層（業務邏輯）
+│   │   │   ├── 📝 auth.go      # 身分驗證服務
+│   │   │   ├── 📝 clock.go     # 打卡服務
+│   │   │   ├── 📝 notify.go    # 提醒通知服務
+│   │   │   ├── 📝 report.go    # 報表生成服務
+│   ├── 📂 utils            # 通用工具
+│   │   ├── 📝 jwt.go       # token 管理
 ├── 📂 deployments          # 部署相關
-│   ├── 📝 Dockerfile       # 容器化設定
-│   ├── 📝 docker-compose.yml # 本地測試環境
-│   ├── 📝 cloudbuild.yaml  # GCP Cloud Build 設定
-│   ├── 📝 k8s.yaml         # Kubernetes 部署設定
-│── 📂 scripts              # 運維腳本
+│── 📂 scripts              # 運維腳本（未完成）
 │   ├── 📝 migrate.sh       # 資料庫遷移
 │   ├── 📝 start.sh         # 啟動指令
 │── 📂 docs                 # 文件
 │   ├── 📝 API.md           # API 說明文件
 │   ├── 📝 architecture.md  # 系統架構說明
-│── .env                    # 環境變數
+│   ├── 📝 GCP_deployment.md# 上雲說明
+├── Dockerfile       # 容器化設定
+├── docker-compose.yml # 本地測試環境
 │── go.mod                  # Golang 依賴管理
 │── go.sum                  # Golang 依賴鎖定
 │── README.md               # 專案說明文件
 ```
 
-## 2. API 層
-**作用**: 提供外部服務和系統的接口，讓用戶（如員工、主管等）與系統互動。
+## 2. 專案開啟（使用 Docker）
 
-### 運作邏輯:
-- **接收請求**: 使用 HTTP 請求處理（如 RESTful API）。 `src/api/`
-- **處理請求**: 當接收到 API 請求時，會進行必要的驗證和業務邏輯處理。`src/services/`
-- **返回響應**: 根據業務邏輯的結果，返回適當的響應數據。`src/utils/`
+若要快速啟動 `NativeCloud_HR` 專案的開發環境，建議使用 Docker 來建立本地測試環境。以下是步驟說明。
 
-## 3. Message Queue 層 (Kafka / NATS)
-**作用**: 用來解耦系統內部不同模塊的交互，實現異步處理。相關檔案放置於 `src/messageQueue/` 跟 `src/events/`中。
+### 2.1. 安裝 Docker 與 Docker Compose
 
-### 運作邏輯:
-- **事件發送**: 當刷卡事件發生時，會將事件資料（如員工 ID、門禁 ID、刷卡結果等）推送到消息隊列（Kafka 或 NATS）。`src/messageQueue/producer.js`
-- **事件消費**: 後端服務會訂閱這些消息，接收到消息後執行業務邏輯（如寫入資料庫、發送 WebSocket 通知）。`src/messageQueue/consumer.js`
-- **事件處理順序**: 根據事件的嚴重性或處理優先級，可能需要設計不同的事件處理順序或限制並發數量。`src/events/eventProcessor.js`
+1. 安裝 Docker：[Docker 安裝指南](https://docs.docker.com/get-docker/)
+2. 安裝 Docker Compose：[Docker Compose 安裝指南](https://docs.docker.com/compose/install/)
 
-## 4. 資料庫相關 (PostgreSQL / Redis)
-**作用**: 用來儲存系統的基本數據，並對數據進行操作（如讀取、寫入、更新）。相關檔案放置於 `src/database/` 和 `src/sync/` 中。
+### 2.2. 克隆專案
 
-### 運作邏輯:
-- **PostgreSQL**: 主要儲存結構化數據，如員工資訊、刷卡紀錄、考勤數據等，並支援高效的查詢操作。 `src/database/postgresClient.js`
-- **Redis**: 作為緩存系統，快速查詢某些高頻資料（如員工的出勤紀錄、門禁狀態等），提高系統效能。`src/database/redisClient.js`
-- **資料同步**: 需要確保資料在不同地點或服務之間同步（例如多地點刷卡系統數據的同步）。`src/sync/dataSync.js`
+首先，將專案代碼克隆到本地端：
+```bash
+git clone https://github.com/4040www/NativeCloud_HR.git
+```
 
-## 5. 系統架構
-**作用**: 整體系統的運行架構，涉及多個子模塊和服務的協同工作。相關檔案放置於 `src/deploy/`，`src/docker/` 和 `src/monitoring/` 中。
+### 2.3. 配置 `.env` 環境變數
 
-### 運作邏輯:
-- **分布式架構**: 使用 GCP 等雲端服務來部署系統，保證高可用性和可擴展性。`deploy/gcpDeployment.yaml`
-- **高可用性**: 通過多區域部署和負載均衡來保證系統高可用，當一個區域的服務宕機時，其他區域能夠繼續提供服務。 `deploy/loadBalancerConfig.js`
-- **容器化**: 使用 Docker 和 Kubernetes 進行容器化部署，讓系統具有彈性擴展的能力。 `docker/Dockerfile`
-- **系統監控**: 需要有監控系統（如 Prometheus）來監視系統狀態，並在系統發生異常時提供警報。 `monitoring/prometheusConfig.yml`
+在`config`檔案夾下，創建 `.env` 檔案並配置相應的環境變數。你可以參考 `.env.example` 檔案進行配置：
 
-## 6. 異常處理與報表
-### 刷卡異常處理:
+```bash
+# DB
+DB_HOST = 35.221.151.72
+DB_USER = （補）
+DB_PASSWORD =（補）
+DB_NAME =（補）
+DB_PORT = 5432
 
-- 相關檔案放置於 `src/exceptions/` 中。
-- **無刷入記錄但有刷出記錄**: 可能是員工未刷入或設備故障，需設定規則處理或允許主管手動處理。 `cardIssueHandler.js`
-- **刷卡時間異常**: 若發現異常頻繁的刷卡行為，系統需自動標記並通知 HR 進行審查。`timeIssueHandler.js`
-- **刷卡結果為 Denied**: 這種情況下應立即通知主管或安保，並考慮是否封鎖員工的門禁權限。 `deniedCardHandler.js`
 
-### 報表設計:
-- 相關檔案放置於 `src/reports/` 中。
-- 設計能夠快速計算出勤、加班等報表，並支持每天、每週、每月的報表查詢。`attendanceReport.js`
-- 考慮將計算結果緩存在 Redis 中，提升報表查詢速度，並減少資料庫壓力。 `reportCache.js`
+# JWT
+JWT_SECRET=（補）
+```
+
+### 2.4. 建立並啟動 Docker 容器
+
+在專案根目錄下，執行以下命令來建立並啟動容器：
+```bash
+docker-compose up --build
+```
+
+此命令會使用 `docker-compose.yml` 配置文件來構建並啟動容器，並在本地環境中啟動 PostgreSQL 資料庫和 Kafka 消息隊列。
+
+### 2.5. 訪問應用
+
+一旦容器啟動完成，你可以通過以下網址來訪問應用：
+- 本地 API 端點：`http://localhost:8080`
+- 健康檢查 API：`http://localhost:8080/api/status`
+
+你也可以通過 API 測試工具（例如 Postman）來調試接口，測試相關的身分驗證、打卡、報表生成等功能。
+
+### 2.6. 資料庫遷移
+
+如果需要執行資料庫遷移，可以使用以下腳本來更新資料庫結構：
+```bash
+docker-compose exec app ./scripts/migrate.sh
+```
+這個腳本會將資料庫的結構更新到最新版本，並確保應用的資料庫與程式碼同步。
+
+### 2.7. 停止容器
+
+當你完成開發或測試後，可以使用以下命令停止 Docker 容器：
+```bash
+docker-compose down
+```
+
+### 2.8. 日誌查看
+
+若需要查看應用的運行日誌，可以執行：
+```bash
+docker-compose logs -f
+```
+這會顯示容器的實時日誌，對於排查錯誤非常有用。

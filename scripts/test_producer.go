@@ -21,7 +21,7 @@ type CheckInRequest struct {
 
 func main() {
 	// Kafka 設定
-	brokers := []string{"localhost:9092"} // 你的 broker 地址
+	brokers := []string{"kafka:9092"} // 你的 broker 地址
 	topic := "checkin-topic"
 
 	config := sarama.NewConfig()
