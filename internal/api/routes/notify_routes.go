@@ -6,10 +6,16 @@ import (
 )
 
 func RegisterNotifyRoutes(router *gin.RouterGroup) {
-	notify := router.Group("/notify")
+	// notify := router.Group("/")
 	{
-		notify.GET("/warning", handlers.OvertimeOrLateCheck)
-		notify.POST("/late", handlers.NotifyManagerTooManyLate)
-		notify.POST("/overtime", handlers.NotifyHRExceedOvertime)
+		router.GET("/warning", handlers.OvertimeOrLateCheck)
+		router.POST("/late", handlers.NotifyManagerTooManyLate)
+		router.POST("/overtime", handlers.NotifyHRExceedOvertime)
 	}
 }
+
+// curl -X GET http://localhost:8080/api/notify/warning \
+// -H "Content-Type: application/json" \
+// -d '{
+// "email": "test@example.com",
+// "password": "your_password"}'

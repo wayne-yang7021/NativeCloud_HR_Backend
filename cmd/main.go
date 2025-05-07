@@ -38,6 +38,10 @@ func main() {
 
 	// 設置 API 路由
 	router := gin.Default()
+	for _, ri := range router.Routes() {
+		fmt.Println("ROUTE:", ri.Method, ri.Path)
+	}
+
 	api.SetupRoutes(router)
 
 	// 啟動 HTTP 伺服器

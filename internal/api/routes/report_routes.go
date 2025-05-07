@@ -7,17 +7,16 @@ import (
 )
 
 func RegisterReportRoutes(router *gin.RouterGroup) {
-	report := router.Group("/report")
+	// report := router.Group("/report")
 	{
-		report.GET("/myRecords/:userID", handlers.GetMyTodayRecords)
-		report.GET("/historyRecords/:userID", handlers.GetMyHistoryRecords)
-		report.GET("/historyRecords/:userID/:startDate/:endDate", handlers.GetMyPeriodRecords)
-		report.GET("/thisMonth/:department/:userID", handlers.GetThisMonthTeam)
-		report.GET("/thisWeek/:department/:userID", handlers.GetThisWeekTeam)
-		report.GET("/PeriodTime/:department/:startDate/:endDate/:userID", handlers.GetCustomPeriodTeam)
-		report.GET("/filterAttendence", handlers.FilterAttendance)
-		report.GET("/exportAttendenceCSV", handlers.ExportAttendanceCSV)
-		report.GET("/exportAttendencePDF", handlers.ExportAttendancePDF)
-
+		router.GET("/myRecords/:userID", handlers.GetMyTodayRecords)
+		router.GET("/historyRecords/:userID", handlers.GetMyHistoryRecords)
+		router.GET("/historyRecords/:userID/:startDate/:endDate", handlers.GetMyPeriodRecords)
+		router.GET("/thisMonth/:department/:userID", handlers.GetThisMonthTeam)
+		router.GET("/thisWeek/:department/:userID", handlers.GetThisWeekTeam)
+		router.GET("/PeriodTime/:department/:startDate/:endDate/:userID", handlers.GetCustomPeriodTeam)
+		router.GET("/filterAttendence", handlers.FilterAttendance)
+		router.GET("/exportAttendenceCSV", handlers.ExportAttendanceCSV)
+		router.GET("/exportAttendencePDF", handlers.ExportAttendancePDF)
 	}
 }
