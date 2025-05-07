@@ -2,9 +2,22 @@ from sqlalchemy import create_engine, text
 from faker import Faker
 import random
 from datetime import datetime, timedelta
+from dotenv import load_dotenv
+import os
 
 # === 連線設定 ===
-DB_URL = 'postgresql://username:password@localhost:5432/cloud_native'
+
+# 載入 .env 檔案
+load_dotenv()
+
+# 組合 DB_URL
+DB_HOST = os.getenv("DB_HOST")
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_NAME = os.getenv("DB_NAME")
+DB_PORT = os.getenv("DB_PORT")
+
+DB_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 engine = create_engine(DB_URL)
 fake = Faker()
 
