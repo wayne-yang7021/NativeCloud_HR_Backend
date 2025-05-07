@@ -1,8 +1,16 @@
 package model
 
-type User struct {
-	ID           uint   `json:"id"`
-	Name         string `json:"name"`
-	Email        string `json:"email"`
-	PasswordHash string `json:"-"` // 不回傳密碼
+type Employee struct {
+	EmployeeID     string `gorm:"primaryKey"`
+	FirstName      string
+	LastName       string
+	IsManager      bool
+	Password       string
+	Email          string
+	OrganizationID string
+}
+
+// 顯式指定 GORM 使用 "Employee" 這個資料表
+func (Employee) TableName() string {
+	return "employee"
 }
