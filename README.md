@@ -104,6 +104,7 @@ JWT_SECRET=（補）
 
 在專案根目錄下，執行以下命令來建立並啟動容器：
 ```bash
+go mod tidy
 docker-compose up --build
 ```
 
