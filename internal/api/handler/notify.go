@@ -13,6 +13,11 @@ func OvertimeOrLateCheck(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "查詢異常員工失敗"})
 		return
 	}
+	if problems == nil {
+		c.JSON(http.StatusOK, gin.H{"message": "本月無異常員工"})
+		return
+	}
+	// 這裡可以根據需要進行進一步的處理，例如發送通知或記錄
 	c.JSON(http.StatusOK, problems)
 }
 

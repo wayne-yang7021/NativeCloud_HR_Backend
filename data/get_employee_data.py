@@ -25,7 +25,7 @@ def get_employees(conn):
     
     employees = []
     employee_ids = []
-    org_id = "L1"  # 假設我們只查詢組織 ID 為 L1 的員工
+    org_id = "L120"  # 假設我們只查詢組織 ID 為 L1 的員工
     # 查詢員工資料
     result = conn.execute(text(
         "SELECT employee_id, first_name, last_name, is_manager, password, email FROM employee WHERE organization_id = :org_id"

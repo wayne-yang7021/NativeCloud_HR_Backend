@@ -1,8 +1,10 @@
+// report_service.go
 package service
 
 import (
 	"bytes"
 	"encoding/csv"
+	"fmt"
 	"time"
 
 	"github.com/4040www/NativeCloud_HR/internal/model"
@@ -10,17 +12,196 @@ import (
 	"github.com/jung-kurt/gofpdf"
 )
 
-// 計算一日的工作時數，並判斷是否遲到
+func FetchTodayRecords(employeeID string) ([]model.AccessLog, error) {
+	today := time.Now()
+	start := time.Date(today.Year(), today.Month(), today.Day(), 0, 0, 0, 0, today.Location())
+	end := start.Add(24 * time.Hour)
+	return repository.GetAccessLogsByEmployeeBetween(employeeID, start, end)
+}
+
+func FetchHistoryRecords(employeeID string) ([]model.AccessLog, error) {
+	start := time.Now().AddDate(0, -1, 0)
+	end := time.Now()
+	return repository.GetAccessLogsByEmployeeBetween(employeeID, start, end)
+}
+
+func FetchHistoryRecordsBetween(employeeID, startDate, endDate string) ([]model.AccessLog, error) {
+	start, _ := time.Parse("2006-01-02", startDate)
+	end, _ := time.Parse("2006-01-02", endDate)
+	return repository.GetAccessLogsByEmployeeBetween(employeeID, start, end.Add(24*time.Hour))
+}
+
+func FetchMonthComparisonReport(departmentID, month string) (map[string]interface{}, map[string]interface{}, error) {
+	current, err := FetchMonthlyTeamReport(departmentID, month)
+	if err != nil {
+		return nil, nil, err
+	}
+	timeObj, _ := time.Parse("2006-01", month)
+	prevMonth := timeObj.AddDate(0, -1, 0).Format("2006-01")
+	prev, err := FetchMonthlyTeamReport(departmentID, prevMonth)
+	return current, prev, err
+}
+
+func FetchMonthlyTeamReport(departmentID, month string) (map[string]interface{}, error) {
+	employees, err := repository.GetAllEmployees()
+	if err != nil {
+		return nil, err
+	}
+	monthTime, _ := time.Parse("2006-01", month)
+	start := time.Date(monthTime.Year(), monthTime.Month(), 1, 0, 0, 0, 0, time.UTC)
+	end := start.AddDate(0, 1, 0)
+
+	totalHours, otHours := 0.0, 0.0
+	overtimeCount := 0
+	uniqueEmployees := make(map[string]bool)
+	for _, e := range employees {
+		if e.OrganizationID == departmentID {
+			logs, _ := repository.GetAccessLogsByEmployeeBetween(e.EmployeeID, start, end)
+			workHours, _ := calculateDailyWorkHours(logs)
+			totalHours += workHours
+			if workHours > 8 {
+				otHours += workHours - 8
+				overtimeCount++
+			}
+			uniqueEmployees[e.EmployeeID] = true
+		}
+	}
+	return map[string]interface{}{
+		"TotalWorkHours": totalHours,
+		"TotalOTHours":   otHours,
+		"OTHoursPerson":  overtimeCount,
+		"OTHeadcounts":   len(uniqueEmployees),
+	}, nil
+}
+
+func FetchWeeklyTeamReport(departmentID, startDate, endDate string) (map[string]interface{}, error) {
+	return FetchCustomPeriodTeamReport(departmentID, startDate, endDate)
+}
+
+func FetchCustomPeriodTeamReport(departmentID, startDate, endDate string) (map[string]interface{}, error) {
+	fmt.Println("⚙️ FetchCustomPeriodTeamReport called with:", departmentID, startDate, endDate)
+
+	employees, err := repository.GetAllEmployees()
+	if err != nil {
+		return nil, err
+	}
+
+	start, _ := time.Parse("2006-01-02", startDate)
+	end, _ := time.Parse("2006-01-02", endDate)
+
+	totalHours, otHours := 0.0, 0.0
+	overtimeCount := 0
+	uniqueEmployees := make(map[string]bool)
+
+	for _, e := range employees {
+		if e.OrganizationID == departmentID {
+			logs, _ := repository.GetAccessLogsByEmployeeBetween(e.EmployeeID, start, end.Add(24*time.Hour))
+			workHours, _ := calculateDailyWorkHours(logs)
+
+			fmt.Printf("👤 %s logs: %d, workHours: %.2f\n", e.EmployeeID, len(logs), workHours)
+
+			totalHours += workHours
+			if workHours > 8 {
+				otHours += workHours - 8
+				overtimeCount++
+			}
+			uniqueEmployees[e.EmployeeID] = true
+		}
+	}
+
+	fmt.Println("✅ Done:", totalHours, otHours, overtimeCount, len(uniqueEmployees))
+
+	return map[string]interface{}{
+		"TotalWorkHours": totalHours,
+		"TotalOTHours":   otHours,
+		"OTHoursPerson":  overtimeCount,
+		"OTHeadcounts":   len(uniqueEmployees),
+	}, nil
+}
+
+func GenerateAlertList(startDate, endDate string) ([]map[string]interface{}, error) {
+	employees, err := repository.GetAllEmployees()
+	if err != nil {
+		return nil, err
+	}
+	start, _ := time.Parse("2006-01-02", startDate)
+	end, _ := time.Parse("2006-01-02", endDate)
+
+	var alerts []map[string]interface{}
+
+	for _, e := range employees {
+		logs, _ := repository.GetAccessLogsByEmployeeBetween(e.EmployeeID, start, end.Add(24*time.Hour))
+
+		// 將紀錄按日期分類
+		dayMap := make(map[string][]model.AccessLog)
+		for _, log := range logs {
+			dateStr := log.AccessTime.Format("2006-01-02")
+			dayMap[dateStr] = append(dayMap[dateStr], log)
+		}
+
+		otCount := 0
+		otHours := 0.0
+		warningDays := 0
+		alertDays := 0
+
+		for _, dayLogs := range dayMap {
+			workHours, _ := calculateDailyWorkHours(dayLogs)
+			if workHours > 8 {
+				otCount++
+				otHours += workHours - 8
+				if workHours >= 12 {
+					alertDays++
+				} else if workHours >= 10 {
+					warningDays++
+				}
+			}
+		}
+
+		if otCount > 0 {
+			status := "Normal"
+			if alertDays >= 1 {
+				status = "Alert"
+			} else if warningDays >= 2 {
+				status = "Warning"
+			}
+
+			alerts = append(alerts, map[string]interface{}{
+				"EmployeeID": e.EmployeeID,
+				"Name":       e.FirstName + " " + e.LastName,
+				"OTCounts":   otCount,
+				"OTHours":    otHours,
+				"status":     status,
+			})
+		}
+	}
+
+	return alerts, nil
+}
+
+//	func GetManagedDepartments(userID string) []string {
+//		// Mock 資料，實際應查角色或 DB 權限
+//		if userID == "admin" {
+//			return []string{"HR", "Sales", "Engineering"}
+//		}
+//		return []string{"Sales"}
+//	}
+func GetManagedDepartments(userID string) []string {
+	depts, err := repository.GetManagedDepartmentsFromDB(userID)
+	if err != nil || len(depts) == 0 {
+		// fallback（或回傳空陣列）
+		return []string{}
+	}
+	return depts
+}
+
 func calculateDailyWorkHours(logs []model.AccessLog) (float64, bool) {
 	var clockIn, clockOut *time.Time
 	isLate := false
-
 	for _, log := range logs {
 		if log.Direction == "IN" {
 			if clockIn == nil || log.AccessTime.Before(*clockIn) {
 				clockIn = &log.AccessTime
 			}
-			// 判斷是否超過 08:30 遲到
 			if log.AccessTime.Hour() > 8 || (log.AccessTime.Hour() == 8 && log.AccessTime.Minute() > 30) {
 				isLate = true
 			}
@@ -31,140 +212,119 @@ func calculateDailyWorkHours(logs []model.AccessLog) (float64, bool) {
 			}
 		}
 	}
-
 	if clockIn != nil && clockOut != nil {
-		workHours := clockOut.Sub(*clockIn).Hours()
-		return workHours, isLate
+		return clockOut.Sub(*clockIn).Hours(), isLate
 	}
 	return 0, isLate
 }
 
-// 取得今日某員工的刷卡紀錄
-func FetchTodayRecords(employeeID string) ([]model.AccessLog, error) {
-	today := time.Now()
-	start := time.Date(today.Year(), today.Month(), today.Day(), 0, 0, 0, 0, today.Location())
-	end := start.Add(24 * time.Hour)
-	return repository.GetAccessLogsByEmployeeBetween(employeeID, start, end)
+func GetManagedDepartmentsFromDB(userID string) ([]string, error) {
+	return repository.GetDepartmentsByManager(userID)
 }
 
-// 取得近一個月的刷卡紀錄
-func FetchHistoryRecords(employeeID string) ([]model.AccessLog, error) {
-	start := time.Now().AddDate(0, -1, 0)
-	end := time.Now()
-	return repository.GetAccessLogsByEmployeeBetween(employeeID, start, end)
-}
-
-// 取得自訂日期區間的刷卡紀錄
-func FetchHistoryRecordsBetween(employeeID, startDate, endDate string) ([]model.AccessLog, error) {
-	start, _ := time.Parse("2006-01-02", startDate)
-	end, _ := time.Parse("2006-01-02", endDate)
-	return repository.GetAccessLogsByEmployeeBetween(employeeID, start, end.Add(24*time.Hour))
-}
-
-// 統計部門在指定月份的總工作時數、加班時數、人數
-func FetchMonthlyTeamReport(departmentID, month string) (float64, float64, int, error) {
-	employees, err := repository.GetAllEmployees()
+func GetAttendanceSummaryForDepartments(department, startDate, endDate string) ([]map[string]interface{}, error) {
+	employees, err := repository.GetEmployeesByDepartment(department)
 	if err != nil {
-		return 0, 0, 0, err
-	}
-
-	monthTime, _ := time.Parse("2006-01", month)
-	start := time.Date(monthTime.Year(), monthTime.Month(), 1, 0, 0, 0, 0, time.UTC)
-	end := start.AddDate(0, 1, 0)
-
-	totalHours := 0.0
-	otHours := 0.0
-	employeeCount := 0
-
-	for _, e := range employees {
-		if e.OrganizationID == departmentID {
-			logs, _ := repository.GetAccessLogsByEmployeeBetween(e.EmployeeID, start, end)
-			workHours, _ := calculateDailyWorkHours(logs)
-			totalHours += workHours
-			if workHours > 8 {
-				otHours += workHours - 8 // 超過 8 小時的部分視為加班
-			}
-			employeeCount++
-		}
-	}
-
-	return totalHours, otHours, employeeCount, nil
-}
-
-// 本質上同 FetchCustomPeriodTeamReport
-func FetchWeeklyTeamReport(departmentID, startDate, endDate string) (float64, float64, int, error) {
-	return FetchCustomPeriodTeamReport(departmentID, startDate, endDate)
-}
-
-// 統計部門在指定日期區間的總工作時數、加班時數、人數
-func FetchCustomPeriodTeamReport(departmentID, startDate, endDate string) (float64, float64, int, error) {
-	employees, err := repository.GetAllEmployees()
-	if err != nil {
-		return 0, 0, 0, err
+		return nil, err
 	}
 	start, _ := time.Parse("2006-01-02", startDate)
 	end, _ := time.Parse("2006-01-02", endDate)
 
-	totalHours := 0.0
-	otHours := 0.0
-	employeeCount := 0
-
-	for _, e := range employees {
-		if e.OrganizationID == departmentID {
-			logs, _ := repository.GetAccessLogsByEmployeeBetween(e.EmployeeID, start, end.Add(24*time.Hour))
-			workHours, _ := calculateDailyWorkHours(logs)
-			totalHours += workHours
-			if workHours > 8 {
-				otHours += workHours - 8
+	var result []map[string]interface{}
+	for _, emp := range employees {
+		logs, _ := repository.GetAccessLogsByEmployeeBetween(emp.EmployeeID, start, end.Add(24*time.Hour))
+		dateMap := make(map[string][]model.AccessLog)
+		for _, r := range logs {
+			day := r.AccessTime.Format("2006-01-02")
+			dateMap[day] = append(dateMap[day], r)
+		}
+		for date, logs := range dateMap {
+			var clockIn, clockOut *model.AccessLog
+			status := "On Time"
+			for _, log := range logs {
+				if log.Direction == "IN" && (clockIn == nil || log.AccessTime.Before(clockIn.AccessTime)) {
+					clockIn = &log
+					if log.AccessTime.Hour() > 8 || (log.AccessTime.Hour() == 8 && log.AccessTime.Minute() > 30) {
+						status = "Late"
+					}
+				}
+				if log.Direction == "OUT" && (clockOut == nil || log.AccessTime.After(clockOut.AccessTime)) {
+					clockOut = &log
+				}
 			}
-			employeeCount++
+			if clockIn == nil || clockOut == nil {
+				status = "Abnormal"
+			}
+			result = append(result, map[string]interface{}{
+				"date":         date,
+				"employeeID":   emp.EmployeeID,
+				"name":         emp.FirstName + " " + emp.LastName,
+				"ClockInTime":  formatTime(clockIn),
+				"ClockOutTime": formatTime(clockOut),
+				"ClockInGate":  getGate(clockIn),
+				"ClockOutGate": getGate(clockOut),
+				"status":       status,
+			})
 		}
 	}
-
-	return totalHours, otHours, employeeCount, nil
+	return result, nil
 }
 
-// 匯出 CSV 格式的出勤紀錄
-func GenerateAttendanceCSV(departmentID, startDate, endDate string) ([]byte, error) {
-	logs, _ := FetchAttendanceFiltered(departmentID, startDate, endDate)
+func GenerateAttendanceSummaryCSV(dept, start, end string) ([]byte, error) {
+	summary, err := GetAttendanceSummaryForDepartments(dept, start, end)
+	if err != nil {
+		return nil, err
+	}
 	var b bytes.Buffer
 	w := csv.NewWriter(&b)
-	w.Write([]string{"EmployeeID", "AccessTime", "Direction", "GateName"})
-	for _, log := range logs {
-		w.Write([]string{log.EmployeeID, log.AccessTime.Format("2006-01-02 15:04"), log.Direction, log.GateName})
+	w.Write([]string{"date", "employee ID", "name", "clock-in time", "clock-in gate", "clock-out time", "clock-out gate", "status"})
+	for _, row := range summary {
+		w.Write([]string{
+			row["date"].(string),
+			row["employeeID"].(string),
+			row["name"].(string),
+			row["ClockInTime"].(string),
+			row["ClockInGate"].(string),
+			row["ClockOutTime"].(string),
+			row["ClockOutGate"].(string),
+			row["status"].(string),
+		})
 	}
 	w.Flush()
 	return b.Bytes(), nil
 }
 
-// 匯出 PDF 格式的出勤紀錄
-func GenerateAttendancePDF(departmentID, startDate, endDate string) ([]byte, error) {
-	logs, _ := FetchAttendanceFiltered(departmentID, startDate, endDate)
+func GenerateAttendanceSummaryPDF(dept, start, end string) ([]byte, error) {
+	summary, err := GetAttendanceSummaryForDepartments(dept, start, end)
+	if err != nil {
+		return nil, err
+	}
 	pdf := gofpdf.New("P", "mm", "A4", "")
 	pdf.AddPage()
 	pdf.SetFont("Arial", "B", 12)
-	pdf.Cell(40, 10, "Attendance Records")
+	pdf.Cell(40, 10, "Attendance Summary")
 	pdf.Ln(10)
-	for _, log := range logs {
-		pdf.Cell(0, 10, log.EmployeeID+" "+log.AccessTime.Format("2006-01-02 15:04")+" "+log.Direction+" "+log.GateName)
-		pdf.Ln(8)
+	pdf.SetFont("Arial", "", 10)
+	for _, row := range summary {
+		line := row["date"].(string) + " " + row["employeeID"].(string) + " " + row["name"].(string) + " " + row["ClockInTime"].(string) + " " + row["ClockOutTime"].(string) + " " + row["status"].(string)
+		pdf.Cell(0, 10, line)
+		pdf.Ln(6)
 	}
 	var b bytes.Buffer
-	err := pdf.Output(&b)
+	err = pdf.Output(&b)
 	return b.Bytes(), err
 }
 
-// 撈出某部門某時間區間內所有人的出勤紀錄
-func FetchAttendanceFiltered(departmentID, startDate, endDate string) ([]model.AccessLog, error) {
-	employees, _ := repository.GetAllEmployees()
-	var result []model.AccessLog
-	start, _ := time.Parse("2006-01-02", startDate)
-	end, _ := time.Parse("2006-01-02", endDate)
-	for _, e := range employees {
-		if e.OrganizationID == departmentID {
-			logs, _ := repository.GetAccessLogsByEmployeeBetween(e.EmployeeID, start, end.Add(24*time.Hour))
-			result = append(result, logs...)
-		}
+func formatTime(log *model.AccessLog) string {
+	if log == nil {
+		return ""
 	}
-	return result, nil
+	return log.AccessTime.Format("15:04")
+}
+
+func getGate(log *model.AccessLog) string {
+	if log == nil {
+		return ""
+	}
+	return log.GateName
 }
