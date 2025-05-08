@@ -9,9 +9,9 @@ import (
 
 var jwtSecret = []byte("your-secret-key") // 可放到 config
 
-func GenerateJWT(user *model.User) (string, error) {
+func GenerateJWT(user *model.Employee) (string, error) {
 	claims := jwt.MapClaims{
-		"user_id": user.ID,
+		"user_id": user.EmployeeID,
 		"email":   user.Email,
 		"exp":     time.Now().Add(time.Hour * 72).Unix(),
 	}

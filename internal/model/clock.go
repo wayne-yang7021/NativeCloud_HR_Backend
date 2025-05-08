@@ -8,3 +8,7 @@ type CheckInRequest struct {
 	Gate_type string `json:"gate_type" binding:"required"`
 	CheckinAt string `json:"gate_name" binding:"required"`
 }
+
+func (CheckInRequest) TableName() string {
+	return "access_log"
+}

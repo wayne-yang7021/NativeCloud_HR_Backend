@@ -9,7 +9,7 @@ import (
 )
 
 // 用 email 和密碼驗證登入，成功回傳使用者資訊與 JWT token
-func AuthenticateUser(email, password string) (*model.User, string, error) {
+func AuthenticateUser(email, password string) (*model.Employee, string, error) {
 	// 查找使用者
 	user, err := repository.FindUserByEmail(email)
 	if err != nil || user == nil {

@@ -12,16 +12,6 @@ type AccessLog struct {
 	AccessResult string
 }
 
-type Employee struct {
-	EmployeeID     string `gorm:"primaryKey"`
-	FirstName      string
-	LastName       string
-	IsManager      bool
-	Password       string
-	Email          string
-	OrganizationID string
-}
-
 // package model
 
 // import "time"
