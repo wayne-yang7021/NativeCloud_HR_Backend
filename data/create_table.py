@@ -5,6 +5,7 @@ import os
 # 載入 .env 檔案
 load_dotenv()
 
+
 # 組合 DB_URL
 DB_HOST = os.getenv("DB_HOST")
 DB_USER = os.getenv("DB_USER")
@@ -12,7 +13,9 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_NAME = os.getenv("DB_NAME")
 DB_PORT = os.getenv("DB_PORT")
 
-DB_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+
+# DB_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+DB_URL = f"postgresql://postgres:bossphebe@34.81.187.130:5432/postgres"
 
 create_sql = """
 -- 啟用 uuid-ossp extension
@@ -35,6 +38,15 @@ CREATE TABLE IF NOT EXISTS Employee (
     Organization_id VARCHAR(255),
     FOREIGN KEY (Organization_id) REFERENCES Organization(Organization_id)
 );
+
+-- 建立 Employee_Organization 表格
+CREATE TABLE IF NOT EXISTS Manager_Departments (
+    Manager_id UUID,
+    Department_name VARCHAR(255),
+    PRIMARY KEY (Manager_id, Department_name),
+    FOREIGN KEY (Manager_id) REFERENCES Employee(Employee_id)
+);
+
 
 -- 建立 Access_log 表格
 CREATE TABLE IF NOT EXISTS Access_log (

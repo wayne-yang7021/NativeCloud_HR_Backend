@@ -246,7 +246,6 @@ func ExportSummaryPDF(c *gin.Context) {
 }
 
 // Page: Attendence Log
-
 func GetMyDepartments(c *gin.Context) {
 	userID := c.Param("userID")
 	departments, err := service.GetManagedDepartmentsFromDB(userID)

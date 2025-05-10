@@ -11,3 +11,9 @@ func RegisterAuthRoutes(auth *gin.RouterGroup) {
 	auth.POST("/logout", handlers.LogoutHandler)
 
 }
+
+// curl -X GET http://localhost:8080/api/auth/login \
+// -H "Content-Type: application/json" \
+// -d '{
+// "email": "test@example.com",
+// "password": "your_password"}'

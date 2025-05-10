@@ -14,8 +14,10 @@ func RegisterNotifyRoutes(router *gin.RouterGroup) {
 	}
 }
 
-// curl -X GET http://localhost:8080/api/notify/warning \
-// -H "Content-Type: application/json" \
-// -d '{
-// "email": "test@example.com",
-// "password": "your_password"}'
+// curl -X POST http://localhost:8080/api/notify/late \
+//   -H "Content-Type: application/json" \
+//   -d '{"employee_id": "d3549701-c2a2-4857-b0d1-c3c7b71aed3d"}'
+
+// curl -X POST http://localhost:8080/api/notify/overtime \
+//   -H "Content-Type: application/json" \
+//   -d '{"employee_id": "d3549701-c2a2-4857-b0d1-c3c7b71aed3d"}'

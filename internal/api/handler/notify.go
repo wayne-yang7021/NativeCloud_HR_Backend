@@ -22,13 +22,25 @@ func OvertimeOrLateCheck(c *gin.Context) {
 }
 
 func NotifyManagerTooManyLate(c *gin.Context) {
-	employeeID := c.Query("employee_id")
-	message := service.NotifyManagerLate(employeeID)
+	var req struct {
+		EmployeeID string `json:"employee_id"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		return
+	}
+	message := service.NotifyManagerLate(req.EmployeeID)
 	c.JSON(http.StatusOK, gin.H{"message": message})
 }
 
 func NotifyHRExceedOvertime(c *gin.Context) {
-	employeeID := c.Query("employee_id")
-	message := service.NotifyHROvertime(employeeID)
+	var req struct {
+		EmployeeID string `json:"employee_id"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		return
+	}
+	message := service.NotifyHROvertime(req.EmployeeID)
 	c.JSON(http.StatusOK, gin.H{"message": message})
 }

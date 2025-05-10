@@ -105,7 +105,7 @@ def insert_employees(conn, org_id, num_employees=5, create_manager=True):
 
 
 # === 建立 Access_log ===
-def insert_access_logs(conn, employee_ids, num_days=7):
+def insert_access_logs(conn, employee_ids, num_days=30):
     """
     為每個員工插入打卡紀錄 (Access_log)
 

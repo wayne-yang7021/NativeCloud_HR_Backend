@@ -16,6 +16,7 @@ COPY . .
 # 確認專案程式碼是否成功複製
 RUN ls -R /app
 
+
 # 下載依賴
 RUN go mod download
 RUN go mod tidy

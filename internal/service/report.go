@@ -47,17 +47,26 @@ func FetchMonthlyTeamReport(departmentID, month string) (map[string]interface{},
 	if err != nil {
 		return nil, err
 	}
-	monthTime, _ := time.Parse("2006-01", month)
-	start := time.Date(monthTime.Year(), monthTime.Month(), 1, 0, 0, 0, 0, time.UTC)
+
+	loc := time.Now().Location()
+	monthTime, _ := time.ParseInLocation("2006-01", month, loc)
+	start := time.Date(monthTime.Year(), monthTime.Month(), 1, 0, 0, 0, 0, loc)
 	end := start.AddDate(0, 1, 0)
+
+	fmt.Printf("🔍 Report period: %s ~ %s\n", start, end)
 
 	totalHours, otHours := 0.0, 0.0
 	overtimeCount := 0
 	uniqueEmployees := make(map[string]bool)
+
 	for _, e := range employees {
 		if e.OrganizationID == departmentID {
+			fmt.Printf("👤 %s %s (%s)\n", e.FirstName, e.LastName, e.EmployeeID)
 			logs, _ := repository.GetAccessLogsByEmployeeBetween(e.EmployeeID, start, end)
+			fmt.Printf("   ⏰ %d access logs\n", len(logs))
 			workHours, _ := calculateDailyWorkHours(logs)
+			fmt.Printf("   📊 Work hours: %.2f\n", workHours)
+
 			totalHours += workHours
 			if workHours > 8 {
 				otHours += workHours - 8
@@ -66,6 +75,9 @@ func FetchMonthlyTeamReport(departmentID, month string) (map[string]interface{},
 			uniqueEmployees[e.EmployeeID] = true
 		}
 	}
+
+	fmt.Println("✅ Done:", totalHours, otHours, overtimeCount, len(uniqueEmployees))
+
 	return map[string]interface{}{
 		"TotalWorkHours": totalHours,
 		"TotalOTHours":   otHours,
@@ -85,7 +97,7 @@ func FetchCustomPeriodTeamReport(departmentID, startDate, endDate string) (map[s
 	if err != nil {
 		return nil, err
 	}
-
+	// fmt.Println("Employee list: ", employees)
 	start, _ := time.Parse("2006-01-02", startDate)
 	end, _ := time.Parse("2006-01-02", endDate)
 
@@ -94,7 +106,9 @@ func FetchCustomPeriodTeamReport(departmentID, startDate, endDate string) (map[s
 	uniqueEmployees := make(map[string]bool)
 
 	for _, e := range employees {
+		// fmt.Printf("👤 %s %s (%s)\n", e.FirstName, e.LastName, e.OrganizationID, departmentID)
 		if e.OrganizationID == departmentID {
+			fmt.Printf("⏰ %s %s (%s)\n", e.FirstName, e.LastName, e.EmployeeID)
 			logs, _ := repository.GetAccessLogsByEmployeeBetween(e.EmployeeID, start, end.Add(24*time.Hour))
 			workHours, _ := calculateDailyWorkHours(logs)
 

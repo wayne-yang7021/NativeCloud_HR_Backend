@@ -16,7 +16,7 @@ func GetAccessLogsByEmployeeBetween(employeeID string, start, end time.Time) ([]
 func GetAllEmployees() ([]model.Employee, error) {
 	var employees []model.Employee
 	err := db.DB.Find(&employees).Error
-	// println("GetAllEmployees", employees)
+
 	return employees, err
 }
 func GetEmployeeByID(id string) (*model.Employee, error) {
@@ -28,7 +28,7 @@ func GetEmployeeByID(id string) (*model.Employee, error) {
 func GetManagedDepartmentsFromDB(userID string) ([]string, error) {
 	var departments []string
 	err := db.DB.Table("manager_departments").
-		Where("employee_id = ?", userID).
+		Where("manager_id = ?", userID). // 修正欄位名稱
 		Pluck("department_name", &departments).Error
 	return departments, err
 }

@@ -12,7 +12,7 @@ func GetAccessLogsByEmployeeAndMonth(employeeID string, month string) ([]model.A
 	startDate, _ := time.Parse("2006-01", month)
 	endDate := startDate.AddDate(0, 1, 0)
 
-	err := db.DB.Where("employee_id = ? AND access_time BETWEEN ? AND ?", employeeID, startDate, endDate).Find(&logs).Error
+	err := db.DB.Table("access_log").Where("employee_id = ? AND access_time BETWEEN ? AND ?", employeeID, startDate, endDate).Find(&logs).Error
 	return logs, err
 }
 
