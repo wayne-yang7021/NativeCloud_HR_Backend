@@ -158,7 +158,7 @@ Authorization: Bearer <your.jwt.token>
 | GET | `/report/inChargeDepartment/:userID` | 查詢使用者管理的部門 |
 | GET | `/report/summaryExportCSV/:department/:startDate/:endDate/:userID` | 匯出出勤紀錄 CSV |
 | GET | `/report/summaryExportPDF/:department/:startDate/:endDate/:userID` | 匯出出勤紀錄 PDF |
-| GET | `/report/myDepartments/:userID` | 查詢使用者可檢視的部門 |
+| GET | `/report/myDepartments/:userID` | 查詢使用者自己所在的部門 |
 | GET | `/report/attendanceSummary?department=...&fromDate=...&toDate=...` | 查詢出勤摘要資料 |
 | GET | `/report/attendanceExportCSV?department=...&fromDate=...&toDate=...` | 匯出出勤摘要 CSV |
 | GET | `/report/attendanceExportPDF?department=...&fromDate=...&toDate=...` | 匯出出勤摘要 PDF |
@@ -221,8 +221,22 @@ Authorization: Bearer <your.jwt.token>
 與 `/report/historyRecords/:userID` 相同格式。
 
 ---
+#### 目前資料中部們所對應的 organization_id
+organizations = [
+        {"name": "CEO", "organization_id": "L1"},
+        {"name": "COO", "organization_id": "L10"},
+        {"name": "HR Manager", "organization_id": "L100"},
+        {"name": "Operations Manager", "organization_id": "L101"},
+        {"name": "CFO", "organization_id": "L11"},
+        {"name": "Accounting Team", "organization_id": "L110"},
+        {"name": "Finance Team", "organization_id": "L111"},
+        {"name": "CTO", "organization_id": "L12"},
+        {"name": "Engineering Team", "organization_id": "L120"},
+        {"name": "IT Support", "organization_id": "L121"},
+    ]
+---
 
-### 🟢 GET `/report/thisMonth/:department/:userID`
+### 🟢 GET `/report/thisMonth/:organization_id/:userID`
 
 查詢部門本月與上月的總工時、加班時數、參與人數等報表。
 
@@ -247,17 +261,17 @@ Authorization: Bearer <your.jwt.token>
 
 ---
 
-### 🟢 GET `/report/thisWeek/:department/:userID`
+### 🟢 GET `/report/thisWeek/:organization_id/:userID`
 
 查詢部門本週與上週的總體統計資料。
 
 #### 🔸 Response
 
-與 `/report/thisMonth/:department/:userID` 相同格式。
+與 `/report/thisMonth/:organization_id/:userID` 相同格式。
 
 ---
 
-### 🟢 GET `/report/PeriodTime/:department/:startDate/:endDate/:userID`
+### 🟢 GET `/report/PeriodTime/:organization_id/:startDate/:endDate/:userID`
 
 查詢部門指定時間區間的總工時、加班、參與人數統計。
 
@@ -310,7 +324,7 @@ Authorization: Bearer <your.jwt.token>
 
 ---
 
-### 🟢 GET `/report/summaryExportCSV/:department/:startDate/:endDate/:userID`
+### 🟢 GET `/report/summaryExportCSV/:organization_id/:startDate/:endDate/:userID`
 
 匯出指定部門與日期的出勤紀錄為 CSV 檔案。
 
@@ -322,7 +336,7 @@ Authorization: Bearer <your.jwt.token>
 
 ---
 
-### 🟢 GET `/report/summaryExportPDF/:department/:startDate/:endDate/:userID`
+### 🟢 GET `/report/summaryExportPDF/:organization_id/:startDate/:endDate/:userID`
 
 匯出出勤摘要報表為 PDF 檔案。
 
@@ -349,7 +363,7 @@ Authorization: Bearer <your.jwt.token>
 
 ---
 
-### 🟢 GET `/report/attendanceSummary?department=...&fromDate=...&toDate=...`
+### 🟢 GET `/report/attendanceSummary?organization_id=...&fromDate=...&toDate=...`
 
 查詢某部門特定區間的所有員工出勤紀錄。
 
@@ -372,13 +386,13 @@ Authorization: Bearer <your.jwt.token>
 
 ---
 
-### 🟢 GET `/report/attendanceExportCSV?department=...&fromDate=...&toDate=...`
+### 🟢 GET `/report/attendanceExportCSV?organization_id=...&fromDate=...&toDate=...`
 
 匯出出勤摘要為 CSV 檔案。
 
 ---
 
-### 🟢 GET `/report/attendanceExportPDF?department=...&fromDate=...&toDate=...`
+### 🟢 GET `/report/attendanceExportPDF?organization_id=...&fromDate=...&toDate=...`
 
 匯出出勤摘要為 PDF 檔案。
 
