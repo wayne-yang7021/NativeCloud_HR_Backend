@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"time"
 
 	"github.com/4040www/NativeCloud_HR/config"
@@ -40,12 +39,9 @@ func main() {
 
 	// 設置 API 路由
 	router := gin.Default()
-	for _, ri := range router.Routes() {
-		fmt.Println("ROUTE:", ri.Method, ri.Path)
-	}
 
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:8080"}, // 你前端的 URL
+		AllowOrigins:     []string{"http://localhost:8080"}, // 修正這裡
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
@@ -55,10 +51,11 @@ func main() {
 
 	api.SetupRoutes(router)
 
-	// 啟動 HTTP 伺服器
 	serverAddr := fmt.Sprintf(":%d", cfg.Server.Port)
 	log.Printf("伺服器啟動於 %s", serverAddr)
-	if err := http.ListenAndServe(serverAddr, router); err != nil {
+
+	// 改用 Gin 提供的啟動方式
+	if err := router.Run(serverAddr); err != nil {
 		log.Fatalf("伺服器啟動失敗: %v", err)
 	}
 }
