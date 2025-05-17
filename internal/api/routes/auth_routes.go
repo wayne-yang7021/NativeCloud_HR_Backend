@@ -6,6 +6,9 @@ import (
 )
 
 func RegisterAuthRoutes(auth *gin.RouterGroup) {
+	auth.OPTIONS("/login", func(c *gin.Context) {
+		c.Status(204)
+	})
 
 	auth.POST("/login", handlers.LoginHandler)
 	auth.POST("/logout", handlers.LogoutHandler)
