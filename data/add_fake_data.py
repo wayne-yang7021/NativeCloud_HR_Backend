@@ -50,7 +50,7 @@ def insert_fixed_organizations(conn):
 
     for org in organizations:
         conn.execute(text("""
-            INSERT INTO organization (organization_id, name)
+            INSERT INTO Organization (organization_id, name)
             VALUES (:organization_id, :name)
         """), org)
     
@@ -83,7 +83,7 @@ def insert_employees(conn, org_id, num_employees=5, create_manager=True):
         password = fake.password(length=12)
 
         result = conn.execute(text("""
-            INSERT INTO employee (first_name, last_name, is_manager, password, email, organization_id)
+            INSERT INTO Employee (first_name, last_name, is_manager, password, email, organization_id)
             VALUES (:first_name, :last_name, :is_manager, :password, :email, :organization_id)
             RETURNING employee_id
         """), {
@@ -121,7 +121,7 @@ def insert_access_logs(conn, employee_ids, num_days=7):
             # 上班打卡 (IN)
             check_in_time = datetime.combine(date, datetime.min.time()) + timedelta(hours=8, minutes=random.randint(0, 30))
             conn.execute(text("""
-                INSERT INTO access_log (employee_id, access_time, direction, gate_type, gate_name, access_result)
+                INSERT INTO Access_log (employee_id, access_time, direction, gate_type, gate_name, access_result)
                 VALUES (:employee_id, :access_time, 'IN', 'entry', :gate_name, 'Admitted')
             """), {
                 "employee_id": emp_id,
@@ -184,25 +184,25 @@ if __name__ == "__main__":
     with engine.connect() as conn:
         org_ids = insert_fixed_organizations(conn)
         employee_id = insert_employees(conn, 'L1', num_employees=1, create_manager=True)
-        insert_access_logs(conn, employee_id, num_days=7)
+        insert_access_logs(conn, employee_id, num_days=30)
         employee_id = insert_employees(conn, 'L10', num_employees=1, create_manager=True)
-        insert_access_logs(conn, employee_id, num_days=7)
+        insert_access_logs(conn, employee_id, num_days=30)
         employee_id = insert_employees(conn, 'L100', num_employees=1, create_manager=True)
-        insert_access_logs(conn, employee_id, num_days=7)
+        insert_access_logs(conn, employee_id, num_days=30)
         employee_id = insert_employees(conn, 'L101', num_employees=1, create_manager=True)
-        insert_access_logs(conn, employee_id, num_days=7)
+        insert_access_logs(conn, employee_id, num_days=30)
         employee_id = insert_employees(conn, 'L11', num_employees=1, create_manager=True)
-        insert_access_logs(conn, employee_id, num_days=7)
+        insert_access_logs(conn, employee_id, num_days=30)
         employee_id = insert_employees(conn, 'L110', num_employees=10, create_manager=True)
-        insert_access_logs(conn, employee_id, num_days=7)
+        insert_access_logs(conn, employee_id, num_days=30)
         employee_id = insert_employees(conn, 'L111', num_employees=10, create_manager=True)
-        insert_access_logs(conn, employee_id, num_days=7)
+        insert_access_logs(conn, employee_id, num_days=30)
         employee_id = insert_employees(conn, 'L12', num_employees=1, create_manager=True)
-        insert_access_logs(conn, employee_id, num_days=7)
+        insert_access_logs(conn, employee_id, num_days=30)
         employee_id = insert_employees(conn, 'L120', num_employees=10, create_manager=True)
-        insert_access_logs(conn, employee_id, num_days=7)
+        insert_access_logs(conn, employee_id, num_days=30)
         employee_id = insert_employees(conn, 'L121', num_employees=10, create_manager=True)
-        insert_access_logs(conn, employee_id, num_days=7)
+        insert_access_logs(conn, employee_id, num_days=30)
 
         conn.commit()
     print("🎉 假資料全部插入完成！")
