@@ -51,10 +51,6 @@ func main() {
 
 	api.SetupRoutes(router)
 
-	router.OPTIONS("/*path", func(c *gin.Context) {
-		c.Status(204)
-	})
-
 	serverAddr := fmt.Sprintf(":%d", cfg.Server.Port)
 	log.Printf("伺服器啟動於 %s", serverAddr)
 
