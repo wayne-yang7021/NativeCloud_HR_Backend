@@ -49,14 +49,6 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}))
 
-	// 額外處理所有 OPTIONS 請求，避免 404
-	router.OPTIONS("/*path", func(c *gin.Context) {
-		c.Header("Access-Control-Allow-Origin", "*")
-		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		c.Header("Access-Control-Allow-Headers", "Origin, Content-Type, Authorization")
-		c.Status(204)
-	})
-
 	api.SetupRoutes(router)
 
 	serverAddr := fmt.Sprintf(":%d", cfg.Server.Port)
