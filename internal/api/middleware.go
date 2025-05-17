@@ -28,5 +28,6 @@ func JWTMiddleware() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
+		c.Next()
 	}
 }
