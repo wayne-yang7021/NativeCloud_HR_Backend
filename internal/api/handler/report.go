@@ -22,7 +22,13 @@ type AttendanceSummary struct {
 }
 
 func GetMyTodayRecords(c *gin.Context) {
-	userID := c.Param("userID")
+
+	// 從 JWT context 中取出 user_id
+	userID := c.GetString("user_id")
+	if userID == "" {
+		c.JSON(401, gin.H{"error": "User ID not found in token"})
+		return
+	}
 
 	logs, err := service.FetchTodayRecords(userID)
 	if err != nil {

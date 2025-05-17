@@ -58,9 +58,46 @@ def get_employees(conn):
     # print(f"✅ organization {org_id} 已插入 {num_employees} 個 employee")
     # return employee_ids
 
-# === 主程式：自由調用 ===
+def get_employee_by_id(conn, employee_id):
+    result = conn.execute(text(
+        """
+        SELECT employee_id, first_name, last_name, is_manager, password, email, organization_id
+        FROM employee
+        WHERE employee_id = :employee_id
+        """
+    ), {"employee_id": employee_id})
+
+    employee = result.fetchone()
+
+    if employee:
+        employee_dict = {
+            "employee_id": employee[0],
+            "first_name": employee[1],
+            "last_name": employee[2],
+            "is_manager": employee[3],
+            "password": employee[4],
+            "email": employee[5],
+            "organization_id": employee[6],
+        }
+        print(f"🔍 查詢成功：{employee_dict}")
+        return employee_dict
+    else:
+        print("❌ 找不到該 employee_id 的資料")
+        return None
+
+# # === 主程式：自由調用 ===
+# if __name__ == "__main__":
+#     with engine.connect() as conn:
+#         employee_id = get_employees(conn)
+#         conn.commit()
+#     print("查詢完成！")
+
 if __name__ == "__main__":
     with engine.connect() as conn:
-        employee_id = get_employees(conn)
+        # 你可以先從這裡拿到一個員工 ID 作為測試
+        # employee_ids = get_employees(conn)
+        # if employee_ids:
+        employee_id = "56ea2475-c67b-45cc-b728-b5a178f36101"
+        employee_info = get_employee_by_id(conn,employee_id)
         conn.commit()
     print("查詢完成！")

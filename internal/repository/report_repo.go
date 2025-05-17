@@ -26,10 +26,19 @@ func GetEmployeeByID(id string) (*model.Employee, error) {
 }
 
 func GetManagedDepartmentsFromDB(userID string) ([]string, error) {
+	var orgID string
+	err := db.DB.Table("employee").
+		Select("organization_id").
+		Where("employee_id = ?", userID).
+		Scan(&orgID).Error
+	if err != nil {
+		return nil, err
+	}
+
 	var departments []string
-	err := db.DB.Table("manager_departments").
-		Where("manager_id = ?", userID). // 修正欄位名稱
-		Pluck("department_name", &departments).Error
+	err = db.DB.Table("organization").
+		Where("organization_id LIKE ?", orgID+"%").
+		Pluck("name", &departments).Error
 	return departments, err
 }
 

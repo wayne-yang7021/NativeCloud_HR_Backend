@@ -8,7 +8,7 @@ import (
 
 func RegisterReportRoutes(router *gin.RouterGroup) {
 	{
-		router.GET("/myRecords/:userID", handler.GetMyTodayRecords)                                       // API #2
+		router.GET("/myRecords", handler.GetMyTodayRecords)                                               // API #2
 		router.GET("/historyRecords/:userID", handler.GetMyHistoryRecords)                                // API #3
 		router.GET("/historyRecords/:userID/:startDate/:endDate", handler.GetMyPeriodRecords)             // API #4
 		router.GET("/thisMonth/:department/:userID", handler.GetThisMonthTeam)                            // API #5
