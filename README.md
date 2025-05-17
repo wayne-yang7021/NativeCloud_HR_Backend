@@ -67,76 +67,117 @@
 │── README.md               # 專案說明文件
 ```
 
+---
+
 ## 2. 專案開啟（使用 Docker）
 
 若要快速啟動 `NativeCloud_HR` 專案的開發環境，建議使用 Docker 來建立本地測試環境。以下是步驟說明。
 
 ### 2.1. 安裝 Docker 與 Docker Compose
 
-1. 安裝 Docker：[Docker 安裝指南](https://docs.docker.com/get-docker/)
-2. 安裝 Docker Compose：[Docker Compose 安裝指南](https://docs.docker.com/compose/install/)
+#### macOS / Windows：
 
-### 2.2. 克隆專案
+若你是使用 macOS 或 Windows，**必須安裝並開啟 Docker Desktop** 才能運行 Docker 容器。
 
-首先，將專案代碼克隆到本地端：
+請依照以下步驟進行：
+
+1. 前往 [Docker Desktop 官網](https://www.docker.com/products/docker-desktop/) 下載並安裝對應作業系統的 Docker Desktop。
+2. 安裝完成後，**請確認 Docker Desktop 已啟動**，並可正常執行容器。
+3. Docker Compose 通常會隨 Docker Desktop 一起安裝，無需額外安裝。
+
+> 💡 **注意**：如未啟動 Docker Desktop，執行 `docker-compose up --build` 可能會出現找不到 Docker daemon 的錯誤。
+
+####  Linux：
+
+本專案已在 Linux 環境中測試通過，**不需要額外安裝 Docker Desktop**，只需安裝 Docker Engine 與 Docker Compose 即可。
+
+請參考以下官方指引安裝：
+
+* 安裝 Docker：[Docker 安裝指南](https://docs.docker.com/engine/install/)
+* 安裝 Docker Compose：[Docker Compose 安裝指南](https://docs.docker.com/compose/install/)
+
+### 2.2. 安裝 Go 環境
+
+請確保系統已安裝 [Go](https://go.dev/doc/install) 並設置好環境變數。
+
+⚠️ **建議在「本機終端機」執行 `go mod tidy`，不要在 VS Code 內建終端機執行，避免依賴拉取錯誤。**
+
 ```bash
-git clone https://github.com/4040www/NativeCloud_HR.git
+go version   # 確認 Go 已正確安裝
 ```
 
-### 2.3. 配置 `.env` 環境變數
+### 2.3. 克隆專案
 
-在`config`檔案夾下，創建 `.env` 檔案並配置相應的環境變數。你可以參考 `.env.example` 檔案進行配置：
+將專案代碼克隆到本地端：
 
 ```bash
-# DB
+git clone https://github.com/4040www/NativeCloud_HR.git
+cd NativeCloud_HR
+```
+
+### 2.4. 配置 `.env` 環境變數
+
+請在 `config/` 資料夾下**直接建立一個 `.env` 檔案**，不可放在 `.env/` 子資料夾中。
+
+你可以參考 `config/.env.example` 來設定：
+
+```bash
+# config/.env
 DB_HOST = 35.221.151.72
-DB_USER = （補）
+DB_USER =（補）
 DB_PASSWORD =（補）
 DB_NAME =（補）
 DB_PORT = 5432
 
-
-# JWT
 JWT_SECRET=（補）
 ```
 
-### 2.4. 建立並啟動 Docker 容器
+⚠️ 請確保資料庫連線資訊為**最新版本**，如有更新請依最新提供的設定檔為主。
 
-在專案根目錄下，執行以下命令來建立並啟動容器：
+### 2.5. 下載依賴並啟動 Docker 容器
+
 ```bash
 go mod tidy
 docker-compose up --build
 ```
 
-此命令會使用 `docker-compose.yml` 配置文件來構建並啟動容器，並在本地環境中啟動 PostgreSQL 資料庫和 Kafka 消息隊列。
+此命令會根據 `docker-compose.yml` 配置，建立並啟動容器，包含：
 
-### 2.5. 訪問應用
+* API server
+* PostgreSQL 資料庫
+* Kafka message queue（如有）
 
-一旦容器啟動完成，你可以通過以下網址來訪問應用：
-- 本地 API 端點：`http://localhost:8080`
-- 健康檢查 API：`http://localhost:8080/api/status`
+### 2.6. 訪問應用
 
-你也可以通過 API 測試工具（例如 Postman）來調試接口，測試相關的身分驗證、打卡、報表生成等功能。
+* 本地 API 端點：`http://localhost:8080`
+* 健康檢查 API：`http://localhost:8080/api/status`
 
-### 2.6. 資料庫遷移
+你可使用 Postman 等工具測試 API，包含：
 
-如果需要執行資料庫遷移，可以使用以下腳本來更新資料庫結構：
+* 身分驗證
+* 打卡功能
+* 提醒通知
+* 報表生成等
+
+### 2.7. 資料庫遷移
+
 ```bash
 docker-compose exec app ./scripts/migrate.sh
 ```
-這個腳本會將資料庫的結構更新到最新版本，並確保應用的資料庫與程式碼同步。
 
-### 2.7. 停止容器
+執行後會自動更新資料表結構至最新版本。
 
-當你完成開發或測試後，可以使用以下命令停止 Docker 容器：
+### 2.8. 停止容器
+
 ```bash
 docker-compose down
 ```
 
-### 2.8. 日誌查看
+### 2.9. 查看日誌
 
-若需要查看應用的運行日誌，可以執行：
 ```bash
 docker-compose logs -f
 ```
-這會顯示容器的實時日誌，對於排查錯誤非常有用。
+
+這將顯示即時的運行紀錄，便於 debug。
+
