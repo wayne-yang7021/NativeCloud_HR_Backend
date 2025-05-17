@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/4040www/NativeCloud_HR/config"
 	"github.com/4040www/NativeCloud_HR/internal/api"
 	"github.com/4040www/NativeCloud_HR/internal/db"
 	messagequeue "github.com/4040www/NativeCloud_HR/internal/messageQueue"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -41,6 +43,15 @@ func main() {
 	for _, ri := range router.Routes() {
 		fmt.Println("ROUTE:", ri.Method, ri.Path)
 	}
+
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:8000"}, // 你前端的 URL
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
 
 	api.SetupRoutes(router)
 
