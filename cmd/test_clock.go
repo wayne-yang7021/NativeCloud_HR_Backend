@@ -9,7 +9,7 @@ import (
 )
 
 type AccessLogRequest struct {
-	EmployeeID   int    `json:"employee_id"`
+	EmployeeID   string `json:"employee_id"`
 	AccessTime   string `json:"access_time"`
 	Direction    string `json:"direction"`     // "in" or "out"
 	GateType     string `json:"gate_type"`     // "entry" or "exit"
@@ -18,7 +18,7 @@ type AccessLogRequest struct {
 }
 
 func testClockInsert() {
-	total := 4000
+	total := 10
 	url := "http://localhost:8080/api/clock"
 
 	for i := 0; i < total; i++ {
@@ -26,7 +26,7 @@ func testClockInsert() {
 
 			// -----更改成真實資料------ //
 
-			EmployeeID: (i % 100) + 1, // 模擬 100 位員工，ID 從 1 開始
+			EmployeeID: "56ea2475-c67b-45cc-b728-b5a178f36101",
 
 			// ----------------------- //
 
