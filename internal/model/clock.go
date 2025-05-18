@@ -1,12 +1,12 @@
 package model
 
 type CheckInRequest struct {
-	ID        string `json:"access_id" binding:"required"`
-	UserID    string `json:"user_id" binding:"required"`
-	Time      string `json:"access_time" binding:"required"`
-	Direction string `json:"direction" binding:"required"` // 進或出
-	Gate_type string `json:"gate_type" binding:"required"`
-	CheckinAt string `json:"gate_name" binding:"required"`
+	EmployeeID   string `json:"employee_id" binding:"required"`
+	AccessTime   string `json:"access_time" binding:"required"`
+	Direction    string `json:"direction" binding:"required"`
+	GateType     string `json:"gate_type" binding:"required"`
+	GateName     string `json:"gate_name" binding:"required"`
+	AccessResult string `json:"access_result" binding:"required"`
 }
 
 func (CheckInRequest) TableName() string {
