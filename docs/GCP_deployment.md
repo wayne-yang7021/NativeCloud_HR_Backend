@@ -99,3 +99,56 @@ sudo docker-compose up --build
 ```bash
 gcloud compute firewall-rules create allow-http --allow tcp:8080
 ```
+
+---
+
+### 6. 自動部署流程
+
+當你將程式碼推送到 `main` 分支，並且 **加上 Git Tag（例如 `v1.0.0`）** 時，GitHub Actions 會自動進行以下動作：
+
+#### ✅ 自動觸發的步驟如下：
+
+1. **構建並推送 Docker Image 至 Docker Hub**：
+
+   * 自動使用 Git tag 作為版本號，例如：`yourdockerhub/native-cloud-hr:v1.0.0`
+   * 同時也會推送一份 `latest` tag 的 image，方便 GCP VM 使用
+
+2. **SSH 連接 GCP VM**：
+
+   * GitHub Actions 會使用你提供的 SSH 金鑰連線到 `native-cloud-hr` VM
+
+3. **拉取最新 Docker Image 並重新部署應用**：
+
+   * 使用 `docker pull` 取得最新 image（版本 tag 或 latest）
+   * 透過 `sudo docker-compose down` 停止舊容器
+   * 使用 `sudo docker-compose up -d` 背景啟動新容器
+
+#### 🛠 需要你準備好的條件：
+
+* 已設定以下 GitHub Secrets：
+
+  * `DOCKER_USERNAME`, `DOCKER_PASSWORD`
+  * `GCP_SSH_USER`, `GCP_SSH_KEY`, `GCP_VM_IP`
+* VM 上已經配置好對應的 `docker-compose.yml`，可拉取正確的 image
+* GitHub Actions workflow 已配置好正確的自動化流程（如使用 `appleboy/ssh-action`）
+
+#### ⏩ 例子：自動化流程觸發方式
+
+```bash
+# 修改完程式碼後，提交變更
+git add .
+git commit -m "新增功能"
+git push
+
+# 建立並推送 Git tag（這會觸發 GitHub Actions）
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+---
+
+這樣你每次標記一個新版本，只要 Push Tag，就會：
+
+* 自動打包 image
+* 上傳 Docker Hub
+* 在 GCP VM 上自動重啟部署應用 🎉
