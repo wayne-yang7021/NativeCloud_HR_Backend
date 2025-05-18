@@ -365,7 +365,7 @@ organizations = [
 
 ---
 
-### 🟢 GET `/report/attendanceSummary?organization_id=...&fromDate=...&toDate=...`
+### 🟢 GET `/report/attendanceSummary?department=...&fromDate=...&toDate=...`
 
 查詢某部門特定區間的所有員工出勤紀錄。
 
@@ -388,13 +388,13 @@ organizations = [
 
 ---
 
-### 🟢 GET `/report/attendanceExportCSV?organization_id=...&fromDate=...&toDate=...`
+### 🟢 GET `/report/attendanceExportCSV?department=...&fromDate=...&toDate=...`
 
 匯出出勤摘要為 CSV 檔案。
 
 ---
 
-### 🟢 GET `/report/attendanceExportPDF?organization_id=...&fromDate=...&toDate=...`
+### 🟢 GET `/report/attendanceExportPDF?department=...&fromDate=...&toDate=...`
 
 匯出出勤摘要為 PDF 檔案。
 
