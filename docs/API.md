@@ -106,10 +106,12 @@ Authorization: Bearer <your.jwt.token>
 - Body:
 ```json
 {
+  "employee_id": 1234,
   "access_time": "2025-04-26T09:00:00Z",
-  "direction": "in",         // "in" 或 "out"
-  "gate_type": "main_gate",  // 例如：main_gate / side_gate（看 db 組）
-  "gate_name": "北門"         // 打卡的門口名稱（看 db 組）
+  "direction": "in",            // "in" 或 "out"
+  "gate_type": "entry",         // 通常為 "entry" 或 "exit"
+  "gate_name": "AZ_door_1",     // 打卡的門口名稱
+  "access_result": "Admitted"   // "Admitted" / "Denied" / "success" 等
 }
 
 ```

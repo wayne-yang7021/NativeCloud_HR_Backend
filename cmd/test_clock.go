@@ -6,47 +6,54 @@ import (
 	"fmt"
 	"net/http"
 	"time"
-
-	"github.com/google/uuid"
 )
 
-type CheckInRequest struct {
-	ID        string `json:"access_id"`
-	UserID    string `json:"user_id"`
-	Time      string `json:"access_time"`
-	Direction string `json:"direction"`
-	Gate_type string `json:"gate_type"`
-	CheckinAt string `json:"gate_name"`
+type AccessLogRequest struct {
+	EmployeeID   int    `json:"employee_id"`
+	AccessTime   string `json:"access_time"`
+	Direction    string `json:"direction"`     // "in" or "out"
+	GateType     string `json:"gate_type"`     // "entry" or "exit"
+	GateName     string `json:"gate_name"`     // e.g., "AZ_door_1"
+	AccessResult string `json:"access_result"` // e.g., "Admitted"
 }
 
-func test_clock() {
+func testClockInsert() {
 	total := 4000
 	url := "http://localhost:8080/api/clock"
 
 	for i := 0; i < total; i++ {
-		req := CheckInRequest{
-			ID:        uuid.New().String(),
-			UserID:    fmt.Sprintf("user-%d", i%100), // 模擬 100 個 user
-			Time:      time.Now().Format(time.RFC3339),
-			Direction: "IN", // 或 "OUT"
-			Gate_type: "NFC",
-			CheckinAt: fmt.Sprintf("Gate-%d", i%5), // 模擬 5 個閘門
+		request := AccessLogRequest{
+
+			// -----更改成真實資料------ //
+
+			EmployeeID: (i % 100) + 1, // 模擬 100 位員工，ID 從 1 開始
+
+			// ----------------------- //
+
+			AccessTime:   time.Now().Format(time.RFC3339),
+			Direction:    "in", // or "out"
+			GateType:     "entry",
+			GateName:     fmt.Sprintf("AZ_door_%d", i%10+1), // 模擬 10 個門
+			AccessResult: "Admitted",
 		}
 
-		payload, _ := json.Marshal(req)
-		reqBody := bytes.NewBuffer(payload)
-
-		resp, err := http.Post(url, "application/json", reqBody)
+		payload, err := json.Marshal(request)
 		if err != nil {
-			fmt.Printf("Failed at %d: %v\n", i, err)
+			fmt.Printf("JSON Marshal error at %d: %v\n", i, err)
+			continue
+		}
+
+		resp, err := http.Post(url, "application/json", bytes.NewBuffer(payload))
+		if err != nil {
+			fmt.Printf("Request failed at %d: %v\n", i, err)
 			continue
 		}
 		resp.Body.Close()
 
 		if i%500 == 0 {
-			fmt.Printf("Sent %d requests\n", i)
+			fmt.Printf("✅ Sent %d requests\n", i)
 		}
 	}
 
-	fmt.Println("Done.")
+	fmt.Println("🎉 Done sending access log test requests.")
 }
