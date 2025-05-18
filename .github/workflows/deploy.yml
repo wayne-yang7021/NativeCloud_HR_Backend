@@ -43,7 +43,7 @@ jobs:
     - name: SSH to GCP VM and deploy
       run: |
         ssh -o StrictHostKeyChecking=no ${USER}@${HOST} << EOF
-          cd ~/native-cloud-hr
+          cd ~/NativeCloud_HR
           git pull
           sudo docker-compose pull
           sudo docker-compose up -d --build
