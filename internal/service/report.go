@@ -200,6 +200,7 @@ func GenerateAlertList(startDate, endDate string) ([]map[string]interface{}, err
 //		return []string{"Sales"}
 //	}
 func GetManagedDepartments(userID string) []string {
+	fmt.Println("GetManagedDepartments called with userID:", userID)
 	depts, err := repository.GetManagedDepartmentsFromDB(userID)
 	if err != nil || len(depts) == 0 {
 		// fallback（或回傳空陣列）

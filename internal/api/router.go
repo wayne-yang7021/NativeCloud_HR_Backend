@@ -22,9 +22,11 @@ func SetupRoutes(r *gin.Engine) {
 	routes.RegisterAuthRoutes(apiGroup.Group("/auth"))
 	routes.RegisterClockRoutes(apiGroup.Group("/clock"))
 
-	// protected := apiGroup.Group("/")
-	// protected.Use(JWTMiddleware())
-
 	routes.RegisterNotifyRoutes(apiGroup.Group("/notify"))
 	routes.RegisterReportRoutes(apiGroup.Group("/report"))
+
+	protected := apiGroup.Group("/")
+	protected.Use(JWTMiddleware())
+	// routes.RegisterNotifyRoutes(protected.Group("/notify"))
+	// routes.RegisterReportRoutes(protected.Group("/report"))
 }

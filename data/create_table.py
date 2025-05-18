@@ -39,15 +39,6 @@ CREATE TABLE IF NOT EXISTS Employee (
     FOREIGN KEY (Organization_id) REFERENCES Organization(Organization_id)
 );
 
--- 建立 Employee_Organization 表格
-CREATE TABLE IF NOT EXISTS Manager_Departments (
-    Manager_id UUID,
-    Department_name VARCHAR(255),
-    PRIMARY KEY (Manager_id, Department_name),
-    FOREIGN KEY (Manager_id) REFERENCES Employee(Employee_id)
-);
-
-
 -- 建立 Access_log 表格
 CREATE TABLE IF NOT EXISTS Access_log (
     Access_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
