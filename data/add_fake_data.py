@@ -96,6 +96,8 @@ def insert_employees(conn, org_id, num_employees=5, create_manager=True):
         })
         employee_id = result.fetchone()[0]
         employee_ids.append(employee_id)
+        if(len(employee_ids) == 10):
+            print(f"✅ organization {org_id}, 員工 {employee_id}, is_manager={is_manager}, email={email}, password={password}")
 
     print(f"✅ organization {org_id} 已插入 {num_employees} 個 employee")
     return employee_ids
@@ -103,7 +105,7 @@ def insert_employees(conn, org_id, num_employees=5, create_manager=True):
 
 
 # === 建立 Access_log ===
-def insert_access_logs(conn, employee_ids, num_days=7):
+def insert_access_logs(conn, employee_ids, num_days=30):
     """
     為每個員工插入打卡紀錄 (Access_log)
 

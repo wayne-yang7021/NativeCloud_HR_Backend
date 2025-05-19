@@ -31,12 +31,26 @@ type Config struct {
 	}
 }
 
-func LoadConfig() (*Config, error) {
-	// 1. 載入 .env
-	_ = godotenv.Load()
+type KafkaConfig struct {
+	Brokers []string
+	Topic   string
+}
 
-	// 2. 讀取 YAML 設定檔
-	data, err := os.ReadFile("config/config.yaml")
+var Kafka = KafkaConfig{
+	Brokers: []string{"kafka:9092"},
+	Topic:   "clock-records",
+}
+
+func LoadConfig() (*Config, error) {
+
+	// 載入 .env 檔案
+	err := godotenv.Load("/app/config/.env")
+	if err != nil {
+		fmt.Println("載入 .env 檔案失敗:", err)
+	}
+
+	// 讀取 config.yaml 設定檔
+	data, err := os.ReadFile("/app/config/config.yaml")
 	if err != nil {
 		return nil, err
 	}

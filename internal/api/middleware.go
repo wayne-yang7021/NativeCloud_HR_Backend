@@ -28,16 +28,6 @@ func JWTMiddleware() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-
-		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-			// 可以取出資訊放入 context，後面 handler 可用
-			c.Set("user_id", claims["user_id"])
-			c.Set("email", claims["email"])
-			c.Set("role", claims["role"])
-			c.Next()
-		} else {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
-			c.Abort()
-		}
+		c.Next()
 	}
 }

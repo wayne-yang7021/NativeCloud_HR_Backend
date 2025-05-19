@@ -2,57 +2,55 @@ package messagequeue
 
 import (
 	"context"
+	"encoding/json"
 	"log"
+	"strings"
 
-	"github.com/segmentio/kafka-go"
+	"github.com/4040www/NativeCloud_HR/internal/model"
+	"github.com/4040www/NativeCloud_HR/internal/repository"
+	"github.com/Shopify/sarama"
 )
 
-// 啟動 Kafka 消費者
-func StartKafkaConsumer(brokers []string, topic string, groupID string) {
-	reader := kafka.NewReader(kafka.ReaderConfig{
-		Brokers:  brokers,
-		Topic:    topic,
-		GroupID:  groupID,
-		MinBytes: 10e3, // 10KB
-		MaxBytes: 10e6, // 10MB
-	})
+func StartConsumer(brokers string, groupID string) error {
+	config := sarama.NewConfig()
+	config.Consumer.Return.Errors = true
+	config.Version = sarama.V2_1_0_0
 
-	log.Println("Kafka Consumer 啟動中...")
+	consumerGroup, err := sarama.NewConsumerGroup(strings.Split(brokers, ","), groupID, config)
+	if err != nil {
+		return err
+	}
 
-	for {
-		msg, err := reader.ReadMessage(context.Background())
-		if err != nil {
-			log.Printf("Kafka 讀取失敗: %v", err)
+	ctx := context.Background()
+
+	go func() {
+		for {
+			if err := consumerGroup.Consume(ctx, []string{CheckInTopic}, &consumerGroupHandler{}); err != nil {
+				log.Printf("Error from consumer: %v", err)
+			}
+		}
+	}()
+
+	return nil
+}
+
+type consumerGroupHandler struct{}
+
+func (h *consumerGroupHandler) Setup(sarama.ConsumerGroupSession) error   { return nil }
+func (h *consumerGroupHandler) Cleanup(sarama.ConsumerGroupSession) error { return nil }
+func (h *consumerGroupHandler) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
+	for message := range claim.Messages() {
+		var record model.CheckInRequest
+		if err := json.Unmarshal(message.Value, &record); err != nil {
+			log.Printf("Failed to unmarshal message: %v", err)
 			continue
 		}
 
-		log.Printf("Kafka 訊息接收: %s", string(msg.Value))
+		if err := repository.CreateCheckinRecord(&record); err != nil {
+			log.Printf("Failed to save to DB: %v", err)
+		}
 
-		// 這裡可以把訊息存進資料庫
+		session.MarkMessage(message, "")
 	}
+	return nil
 }
-
-// NATS 版本
-
-// package events
-
-// import (
-// 	"log"
-
-// 	"github.com/nats-io/nats.go"
-// )
-
-// // 啟動 NATS 訂閱
-// func StartNATSConsumer() {
-// 	_, err := nc.Subscribe("access.events", func(msg *nats.Msg) {
-// 		log.Printf("NATS 訊息接收: %s", string(msg.Data))
-
-// 		// 這裡可以把訊息存進資料庫
-// 	})
-
-// 	if err != nil {
-// 		log.Fatalf("NATS 訂閱失敗: %v", err)
-// 	}
-
-// 	log.Println("NATS Consumer 啟動完成")
-// }
