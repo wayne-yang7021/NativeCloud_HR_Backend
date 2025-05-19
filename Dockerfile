@@ -58,7 +58,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o native-cloud-hr ./cmd/main.go && \
 # 第二階段: 運行環境，改用 alpine 支援 healthcheck 工具
 FROM alpine:latest
 
-RUN apk add --no-cache ca-certificates nc
+RUN apk add --no-cache ca-certificates netcat-openbsd
 
 WORKDIR /root/
 COPY --from=builder /app/native-cloud-hr ./native-cloud-hr
