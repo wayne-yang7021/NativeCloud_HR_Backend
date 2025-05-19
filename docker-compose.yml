@@ -30,6 +30,11 @@ services:
     container_name: native-cloud-hr
     ports:
       - "8080:8080"
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "8080"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
     environment:
       - KAFKA_ENABLED=true
       - KAFKA_BROKERS=kafka:9092
@@ -48,3 +53,4 @@ volumes:
 networks:
   kafka_network:
     driver: bridge
+ 
