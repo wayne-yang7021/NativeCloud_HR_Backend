@@ -37,7 +37,7 @@ cd NativeCloud_HR
 若已經 clone 過，更新程式碼：
 
 ```bash
-cd NativeCloud_HR
+cd /opt/shared/NativeCloud_HR
 git pull
 ```
 
