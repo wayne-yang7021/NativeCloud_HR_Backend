@@ -25,6 +25,20 @@ jobs:
     - name: Extract tag name
       id: extract_tag
       run: echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+    
+    - name: Free up space on GitHub runner
+      run: |
+        echo "Before cleanup:"
+        df -h
+
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /opt/ghc
+        sudo rm -rf /usr/local/share/boost
+        sudo apt clean
+
+        echo "After cleanup:"
+        df -h
+  
 
     - name: Build and push Docker image
       uses: docker/build-push-action@v5
