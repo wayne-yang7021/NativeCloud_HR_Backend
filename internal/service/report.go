@@ -392,6 +392,11 @@ func GetAttendanceSummaryForDepartments(department, startDate, endDate string) (
 			if clockIn == nil || clockOut == nil {
 				status = "Abnormal"
 			}
+
+			if clockIn == nil && clockOut == nil {
+				status = "Day Off"
+			}
+
 			result = append(result, map[string]interface{}{
 				"date":         date,
 				"employeeID":   emp.EmployeeID,
