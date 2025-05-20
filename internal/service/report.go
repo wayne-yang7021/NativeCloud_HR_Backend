@@ -364,37 +364,49 @@ func GetAttendanceSummaryForDepartments(department, startDate, endDate string) (
 	if err != nil {
 		return nil, err
 	}
+
 	start, _ := time.Parse("2006-01-02", startDate)
 	end, _ := time.Parse("2006-01-02", endDate)
+
+	// 建立從 start 到 end 的每一天清單
+	dates := []string{}
+	for d := start; !d.After(end); d = d.AddDate(0, 0, 1) {
+		dates = append(dates, d.Format("2006-01-02"))
+	}
 
 	var result []map[string]interface{}
 	for _, emp := range employees {
 		logs, _ := repository.GetAccessLogsByEmployeeBetween(emp.EmployeeID, start, end.Add(24*time.Hour))
+
+		// 將 logs 根據日期分組
 		dateMap := make(map[string][]model.AccessLog)
 		for _, r := range logs {
 			day := r.AccessTime.Format("2006-01-02")
 			dateMap[day] = append(dateMap[day], r)
 		}
-		for date, logs := range dateMap {
+
+		for _, date := range dates {
+			logs := dateMap[date]
 			var clockIn, clockOut *model.AccessLog
 			status := "On Time"
-			for _, log := range logs {
-				if log.Direction == "IN" && (clockIn == nil || log.AccessTime.Before(clockIn.AccessTime)) {
-					clockIn = &log
-					if log.AccessTime.Hour() > 8 || (log.AccessTime.Hour() == 8 && log.AccessTime.Minute() > 30) {
-						status = "Late"
+
+			if len(logs) == 0 {
+				status = "Day Off"
+			} else {
+				for _, log := range logs {
+					if log.Direction == "IN" && (clockIn == nil || log.AccessTime.Before(clockIn.AccessTime)) {
+						clockIn = &log
+					}
+					if log.Direction == "OUT" && (clockOut == nil || log.AccessTime.After(clockOut.AccessTime)) {
+						clockOut = &log
 					}
 				}
-				if log.Direction == "OUT" && (clockOut == nil || log.AccessTime.After(clockOut.AccessTime)) {
-					clockOut = &log
-				}
-			}
-			if clockIn == nil || clockOut == nil {
-				status = "Abnormal"
-			}
 
-			if clockIn == nil && clockOut == nil {
-				status = "Day Off"
+				if clockIn == nil || clockOut == nil {
+					status = "Abnormal"
+				} else if clockIn.AccessTime.Hour() > 8 || (clockIn.AccessTime.Hour() == 8 && clockIn.AccessTime.Minute() > 30) {
+					status = "Late"
+				}
 			}
 
 			result = append(result, map[string]interface{}{
@@ -409,11 +421,12 @@ func GetAttendanceSummaryForDepartments(department, startDate, endDate string) (
 			})
 		}
 	}
+
 	// 排序：日期從新到舊
 	sort.Slice(result, func(i, j int) bool {
 		dateI, _ := time.Parse("2006-01-02", result[i]["date"].(string))
 		dateJ, _ := time.Parse("2006-01-02", result[j]["date"].(string))
-		return dateI.After(dateJ) // 最新的排前面
+		return dateI.After(dateJ)
 	})
 
 	return result, nil
