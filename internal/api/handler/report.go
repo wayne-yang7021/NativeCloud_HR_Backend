@@ -3,6 +3,7 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/4040www/NativeCloud_HR/internal/service"
@@ -252,39 +253,64 @@ func GetMyPeriodRecords(c *gin.Context) {
 // 	return log.AccessTime.Format("15:04")
 // }
 
-// func getGate(log *model.AccessLog) string {
-// 	if log == nil {
-// 		return ""
-// 	}
-// 	return log.GateName
-// }
+//	func getGate(log *model.AccessLog) string {
+//		if log == nil {
+//			return ""
+//		}
+//		return log.GateName
+//	}
 
 func GetThisMonthTeam(c *gin.Context) {
 	department := c.Param("department")
-	month := c.DefaultQuery("month", time.Now().Format("2006-01"))
-	current, prev, err := service.FetchMonthComparisonReport(department, month)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+	monthsStr := c.DefaultQuery("months", "1")
+	months, err := strconv.Atoi(monthsStr)
+	if err != nil || months < 1 {
+		months = 1
 	}
-	c.JSON(http.StatusOK, []interface{}{current, prev})
+
+	today := time.Now()
+	var reports []interface{}
+
+	for i := 0; i < months; i++ {
+		targetMonth := today.AddDate(0, -i, 0).Format("2006-01")
+
+		report, err := service.FetchMonthlyTeamReport(department, targetMonth)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		reports = append(reports, report)
+	}
+
+	c.JSON(http.StatusOK, reports)
 }
 
 func GetThisWeekTeam(c *gin.Context) {
 	department := c.Param("department")
-	now := time.Now()
-	start := now.AddDate(0, 0, -int(now.Weekday())+1)
-	end := start.AddDate(0, 0, 6)
-	lastStart := start.AddDate(0, 0, -7)
-	lastEnd := end.AddDate(0, 0, -7)
-
-	current, err1 := service.FetchWeeklyTeamReport(department, start.Format("2006-01-02"), end.Format("2006-01-02"))
-	prev, err2 := service.FetchWeeklyTeamReport(department, lastStart.Format("2006-01-02"), lastEnd.Format("2006-01-02"))
-	if err1 != nil || err2 != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load report"})
-		return
+	weeksStr := c.DefaultQuery("weeks", "1")
+	weeks, err := strconv.Atoi(weeksStr)
+	if err != nil || weeks < 1 {
+		weeks = 1
 	}
-	c.JSON(http.StatusOK, []interface{}{current, prev})
+
+	today := time.Now()
+	var reports []interface{}
+
+	for i := 0; i < weeks; i++ {
+		end := today.AddDate(0, 0, -7*i)
+		start := end.AddDate(0, 0, -int(end.Weekday())+1)
+
+		report, err := service.FetchWeeklyTeamReport(department, start.Format("2006-01-02"), end.Format("2006-01-02"))
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		reports = append(reports, report)
+	}
+
+	c.JSON(http.StatusOK, reports)
 }
 
 func GetCustomPeriodTeam(c *gin.Context) {

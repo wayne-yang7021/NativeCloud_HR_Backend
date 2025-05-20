@@ -298,13 +298,16 @@ func GenerateAlertList(startDate, endDate string) ([]map[string]interface{}, err
 				status = "Warning"
 			}
 
-			alerts = append(alerts, map[string]interface{}{
-				"EmployeeID": e.EmployeeID,
-				"Name":       e.FirstName + " " + e.LastName,
-				"OTCounts":   otCount,
-				"OTHours":    otHours,
-				"status":     status,
-			})
+			// 只加入 Warning 或 Alert
+			if status == "Warning" || status == "Alert" {
+				alerts = append(alerts, map[string]interface{}{
+					"EmployeeID": e.EmployeeID,
+					"Name":       e.FirstName + " " + e.LastName,
+					"OTCounts":   otCount,
+					"OTHours":    otHours,
+					"status":     status,
+				})
+			}
 		}
 	}
 
