@@ -11,9 +11,9 @@ import (
 // 用 email 和密碼驗證登入，成功回傳使用者資訊與 JWT token
 func AuthenticateUser(email, password string) (*model.Employee, string, error) {
 	// 查找使用者
-	user, err := repository.FindUserByEmail(email)
+	user, err := repository.Auth(email, password)
 	if err != nil || user == nil {
-		return nil, "", errors.New("user not found")
+		return nil, "", errors.New("failde to login")
 	}
 
 	// 產生 JWT token
