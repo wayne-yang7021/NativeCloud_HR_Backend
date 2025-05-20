@@ -5,7 +5,6 @@ import os
 # 載入 .env 檔案
 load_dotenv()
 
-
 # 組合 DB_URL
 DB_HOST = os.getenv("DB_HOST")
 DB_USER = os.getenv("DB_USER")
@@ -13,9 +12,7 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_NAME = os.getenv("DB_NAME")
 DB_PORT = os.getenv("DB_PORT")
 
-
-# DB_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-DB_URL = f"postgresql://postgres:bossphebe@34.81.187.130:5432/postgres"
+DB_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
 create_sql = """
 -- 啟用 uuid-ossp extension

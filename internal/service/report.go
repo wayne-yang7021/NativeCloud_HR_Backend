@@ -5,12 +5,131 @@ import (
 	"bytes"
 	"encoding/csv"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/4040www/NativeCloud_HR/internal/model"
 	"github.com/4040www/NativeCloud_HR/internal/repository"
 	"github.com/jung-kurt/gofpdf"
 )
+
+// Get simple employee's attendance summary
+func GetTodayAttendanceSummary(userID string) (*model.AttendanceSummary, error) {
+	logs, err := FetchTodayRecords(userID)
+	if err != nil {
+		return nil, err
+	}
+	if len(logs) == 0 {
+		return nil, nil
+	}
+
+	emp, err := repository.GetEmployeeByID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	var clockIn, clockOut *model.AccessLog
+	status := "On Time"
+
+	for _, log := range logs {
+		if log.Direction == "IN" && (clockIn == nil || log.AccessTime.Before(clockIn.AccessTime)) {
+			clockIn = &log
+			if log.AccessTime.Hour() > 8 || (log.AccessTime.Hour() == 8 && log.AccessTime.Minute() > 30) {
+				status = "Late"
+			}
+		}
+		if log.Direction == "OUT" && (clockOut == nil || log.AccessTime.After(clockOut.AccessTime)) {
+			clockOut = &log
+		}
+	}
+
+	if clockIn == nil || clockOut == nil {
+		status = "Abnormal"
+	}
+
+	if clockIn == nil && clockOut == nil {
+		status = "Day Off"
+	}
+
+	var date string
+	if clockIn != nil {
+		date = clockIn.AccessTime.Format("2006-01-02")
+	} else if clockOut != nil {
+		date = clockOut.AccessTime.Format("2006-01-02")
+	} else {
+		date = time.Now().Format("2006-01-02")
+	}
+
+	summary := &model.AttendanceSummary{
+		Date:         date,
+		Name:         emp.FirstName + " " + emp.LastName,
+		ClockInTime:  formatTime(clockIn),
+		ClockOutTime: formatTime(clockOut),
+		ClockInGate:  getGate(clockIn),
+		ClockOutGate: getGate(clockOut),
+		Status:       status,
+	}
+
+	return summary, nil
+
+}
+
+func GetAttendanceWithEmployee(userID string, start, end time.Time) ([]model.AttendanceSummary, error) {
+	records, err := repository.GetAccessLogsByEmployeeBetween(userID, start, end.Add(24*time.Hour))
+	if err != nil {
+		return nil, err
+	}
+
+	emp, err := repository.GetEmployeeByID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	dateMap := make(map[string][]model.AccessLog)
+	for _, r := range records {
+		day := r.AccessTime.Format("2006-01-02")
+		dateMap[day] = append(dateMap[day], r)
+	}
+
+	var results []model.AttendanceSummary
+	for date, logs := range dateMap {
+		var clockIn, clockOut *model.AccessLog
+		status := "On Time"
+
+		for _, log := range logs {
+			if log.Direction == "IN" && (clockIn == nil || log.AccessTime.Before(clockIn.AccessTime)) {
+				clockIn = &log
+				if log.AccessTime.Hour() > 8 || (log.AccessTime.Hour() == 8 && log.AccessTime.Minute() > 30) {
+					status = "Late"
+				}
+			}
+			if log.Direction == "OUT" && (clockOut == nil || log.AccessTime.After(clockOut.AccessTime)) {
+				clockOut = &log
+			}
+		}
+
+		if clockIn == nil || clockOut == nil {
+			status = "Abnormal"
+		}
+
+		if clockIn == nil && clockOut == nil {
+			status = "Day Off"
+		}
+
+		results = append(results, model.AttendanceSummary{
+			Date:         date,
+			Name:         emp.FirstName + " " + emp.LastName,
+			ClockInTime:  formatTime(clockIn),
+			ClockOutTime: formatTime(clockOut),
+			ClockInGate:  getGate(clockIn),
+			ClockOutGate: getGate(clockOut),
+			Status:       status,
+		})
+	}
+
+	return results, nil
+
+}
 
 func FetchTodayRecords(employeeID string) ([]model.AccessLog, error) {
 	today := time.Now()
@@ -179,13 +298,16 @@ func GenerateAlertList(startDate, endDate string) ([]map[string]interface{}, err
 				status = "Warning"
 			}
 
-			alerts = append(alerts, map[string]interface{}{
-				"EmployeeID": e.EmployeeID,
-				"Name":       e.FirstName + " " + e.LastName,
-				"OTCounts":   otCount,
-				"OTHours":    otHours,
-				"status":     status,
-			})
+			// 只加入 Warning 或 Alert
+			if status == "Warning" || status == "Alert" {
+				alerts = append(alerts, map[string]interface{}{
+					"EmployeeID": e.EmployeeID,
+					"Name":       e.FirstName + " " + e.LastName,
+					"OTCounts":   otCount,
+					"OTHours":    otHours,
+					"status":     status,
+				})
+			}
 		}
 	}
 
@@ -242,34 +364,51 @@ func GetAttendanceSummaryForDepartments(department, startDate, endDate string) (
 	if err != nil {
 		return nil, err
 	}
+
 	start, _ := time.Parse("2006-01-02", startDate)
 	end, _ := time.Parse("2006-01-02", endDate)
+
+	// 建立從 start 到 end 的每一天清單
+	dates := []string{}
+	for d := start; !d.After(end); d = d.AddDate(0, 0, 1) {
+		dates = append(dates, d.Format("2006-01-02"))
+	}
 
 	var result []map[string]interface{}
 	for _, emp := range employees {
 		logs, _ := repository.GetAccessLogsByEmployeeBetween(emp.EmployeeID, start, end.Add(24*time.Hour))
+
+		// 將 logs 根據日期分組
 		dateMap := make(map[string][]model.AccessLog)
 		for _, r := range logs {
 			day := r.AccessTime.Format("2006-01-02")
 			dateMap[day] = append(dateMap[day], r)
 		}
-		for date, logs := range dateMap {
+
+		for _, date := range dates {
+			logs := dateMap[date]
 			var clockIn, clockOut *model.AccessLog
 			status := "On Time"
-			for _, log := range logs {
-				if log.Direction == "IN" && (clockIn == nil || log.AccessTime.Before(clockIn.AccessTime)) {
-					clockIn = &log
-					if log.AccessTime.Hour() > 8 || (log.AccessTime.Hour() == 8 && log.AccessTime.Minute() > 30) {
-						status = "Late"
+
+			if len(logs) == 0 {
+				status = "Day Off"
+			} else {
+				for _, log := range logs {
+					if log.Direction == "IN" && (clockIn == nil || log.AccessTime.Before(clockIn.AccessTime)) {
+						clockIn = &log
+					}
+					if log.Direction == "OUT" && (clockOut == nil || log.AccessTime.After(clockOut.AccessTime)) {
+						clockOut = &log
 					}
 				}
-				if log.Direction == "OUT" && (clockOut == nil || log.AccessTime.After(clockOut.AccessTime)) {
-					clockOut = &log
+
+				if clockIn == nil || clockOut == nil {
+					status = "Abnormal"
+				} else if clockIn.AccessTime.Hour() > 8 || (clockIn.AccessTime.Hour() == 8 && clockIn.AccessTime.Minute() > 30) {
+					status = "Late"
 				}
 			}
-			if clockIn == nil || clockOut == nil {
-				status = "Abnormal"
-			}
+
 			result = append(result, map[string]interface{}{
 				"date":         date,
 				"employeeID":   emp.EmployeeID,
@@ -282,14 +421,38 @@ func GetAttendanceSummaryForDepartments(department, startDate, endDate string) (
 			})
 		}
 	}
+
+	// 排序：日期從新到舊
+	sort.Slice(result, func(i, j int) bool {
+		dateI, _ := time.Parse("2006-01-02", result[i]["date"].(string))
+		dateJ, _ := time.Parse("2006-01-02", result[j]["date"].(string))
+		return dateI.After(dateJ)
+	})
+
 	return result, nil
 }
+
+/*
+Status要有：
+1. On Time --> 8:30 前到
+2. Late -->
+3. Leave Early --> 17:30 前走的就算是
+4. Day Off（週末）-->
+5. Abnormal（沒有打卡紀錄）--> 一天有打一次卡（只有一次進或是只有一次出）
+*/
 
 func GenerateAttendanceSummaryCSV(dept, start, end string) ([]byte, error) {
 	summary, err := GetAttendanceSummaryForDepartments(dept, start, end)
 	if err != nil {
 		return nil, err
 	}
+
+	sort.Slice(summary, func(i, j int) bool {
+		dateI, _ := time.Parse("2006-01-02", summary[i]["date"].(string))
+		dateJ, _ := time.Parse("2006-01-02", summary[j]["date"].(string))
+		return dateI.After(dateJ)
+	})
+
 	var b bytes.Buffer
 	w := csv.NewWriter(&b)
 	w.Write([]string{"date", "employee ID", "name", "clock-in time", "clock-in gate", "clock-out time", "clock-out gate", "status"})
@@ -306,6 +469,7 @@ func GenerateAttendanceSummaryCSV(dept, start, end string) ([]byte, error) {
 		})
 	}
 	w.Flush()
+
 	return b.Bytes(), nil
 }
 
@@ -314,17 +478,44 @@ func GenerateAttendanceSummaryPDF(dept, start, end string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// ✅ 排序：從新到舊
+	sort.Slice(summary, func(i, j int) bool {
+		dateI, _ := time.Parse("2006-01-02", summary[i]["date"].(string))
+		dateJ, _ := time.Parse("2006-01-02", summary[j]["date"].(string))
+		return dateI.After(dateJ)
+	})
+
 	pdf := gofpdf.New("P", "mm", "A4", "")
 	pdf.AddPage()
-	pdf.SetFont("Arial", "B", 12)
+
+	// ✅ 標題
+	pdf.SetFont("Arial", "B", 14)
 	pdf.Cell(40, 10, "Attendance Summary")
-	pdf.Ln(10)
-	pdf.SetFont("Arial", "", 10)
-	for _, row := range summary {
-		line := row["date"].(string) + " " + row["employeeID"].(string) + " " + row["name"].(string) + " " + row["ClockInTime"].(string) + " " + row["ClockOutTime"].(string) + " " + row["status"].(string)
-		pdf.Cell(0, 10, line)
-		pdf.Ln(6)
+	pdf.Ln(12)
+
+	// ✅ 表頭
+	header := []string{"Date", "Employee ID", "Name", "Clock-in Time", "Clock-in Gate", "Clock-out Time", "Clock-out Gate", "Status"}
+	pdf.SetFont("Arial", "B", 10)
+	for _, str := range header {
+		pdf.CellFormat(25, 8, str, "1", 0, "C", false, 0, "")
 	}
+	pdf.Ln(-1)
+
+	// ✅ 表格內容
+	pdf.SetFont("Arial", "", 9)
+	for _, row := range summary {
+		pdf.CellFormat(25, 7, row["date"].(string), "1", 0, "C", false, 0, "")
+		pdf.CellFormat(25, 7, row["employeeID"].(string), "1", 0, "C", false, 0, "")
+		pdf.CellFormat(25, 7, row["name"].(string), "1", 0, "C", false, 0, "")
+		pdf.CellFormat(25, 7, row["ClockInTime"].(string), "1", 0, "C", false, 0, "")
+		pdf.CellFormat(25, 7, row["ClockInGate"].(string), "1", 0, "C", false, 0, "")
+		pdf.CellFormat(25, 7, row["ClockOutTime"].(string), "1", 0, "C", false, 0, "")
+		pdf.CellFormat(25, 7, row["ClockOutGate"].(string), "1", 0, "C", false, 0, "")
+		pdf.CellFormat(25, 7, row["status"].(string), "1", 0, "C", false, 0, "")
+		pdf.Ln(-1)
+	}
+
 	var b bytes.Buffer
 	err = pdf.Output(&b)
 	return b.Bytes(), err

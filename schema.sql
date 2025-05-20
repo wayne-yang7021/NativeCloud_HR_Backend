@@ -1,3 +1,6 @@
+-- 要使用 UUID，先確保安裝 uuid-ossp extension
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 -- 建立 Organization 表格 (Organization_id 為 INT)
 CREATE TABLE Organization (
     Organization_id VARCHAR(255) PRIMARY KEY,

@@ -21,3 +21,5 @@ pkg/
 summary.csv
 summary.pdf
 
+# Python 相關
+.venv/
