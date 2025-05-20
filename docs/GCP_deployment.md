@@ -155,5 +155,3 @@ git push origin v1.0.0
 * 上傳 Docker Hub
 * 在 GCP VM 上自動重啟部署應用 🎉
 
-sudo mkdir -p /opt/shared/
-sudo chmod 777 /opt/shared/
