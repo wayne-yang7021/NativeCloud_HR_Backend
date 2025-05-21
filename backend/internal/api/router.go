@@ -20,6 +20,7 @@ func SetupRoutes(r *gin.Engine) {
 	})
 
 	routes.RegisterAuthRoutes(apiGroup.Group("/auth"))
+	routes.RegisterClockRoutes(apiGroup.Group("/clock"))
 
 	routes.RegisterNotifyRoutes(apiGroup.Group("/notify"))
 	routes.RegisterReportRoutes(apiGroup.Group("/report"))

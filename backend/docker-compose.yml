@@ -7,11 +7,6 @@ services:
     container_name: native-cloud-hr
     ports:
       - "8080:8080"
-    healthcheck:
-      test: ["CMD", "nc", "-z", "localhost", "8080"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
     volumes:
       - ./config/.env:/app/config/.env
       - ./config/config.yaml:/app/config/config.yaml
