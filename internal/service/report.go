@@ -205,9 +205,9 @@ func FetchMonthlyTeamReport(departmentID, month string) (map[string]interface{},
 	}, nil
 }
 
-func FetchWeeklyTeamReport(departmentID, startDate, endDate string) (map[string]interface{}, error) {
-	return FetchCustomPeriodTeamReport(departmentID, startDate, endDate)
-}
+// func FetchWeeklyTeamReport(departmentID, startDate, endDate string) (map[string]interface{}, error) {
+// 	return FetchCustomPeriodTeamReport(departmentID, startDate, endDate)
+// }
 
 func FetchCustomPeriodTeamReport(departmentID, startDate, endDate string) (map[string]interface{}, error) {
 	fmt.Println("⚙️ FetchCustomPeriodTeamReport called with:", departmentID, startDate, endDate)

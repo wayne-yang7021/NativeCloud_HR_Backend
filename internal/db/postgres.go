@@ -7,6 +7,8 @@ import (
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+
+	"github.com/4040www/NativeCloud_HR/internal/model"
 )
 
 var DB *gorm.DB
@@ -29,6 +31,18 @@ func InitPostgres() {
 	}
 
 	log.Println("✅ Connected to PostgreSQL")
+}
+
+func AutoMigrate() error {
+	db := GetDB()
+
+	log.Println("📦 開始自動建立資料表...")
+
+	return db.AutoMigrate(
+		&model.Employee{},
+		&model.AccessLog{},
+		&model.NotifyRecord{},
+	)
 }
 
 func GetDB() *gorm.DB {

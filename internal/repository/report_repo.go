@@ -16,9 +16,9 @@ func GetAccessLogsByEmployeeBetween(employeeID string, start, end time.Time) ([]
 func GetAllEmployees() ([]model.Employee, error) {
 	var employees []model.Employee
 	err := db.DB.Find(&employees).Error
-
 	return employees, err
 }
+
 func GetEmployeeByID(id string) (*model.Employee, error) {
 	var emp model.Employee
 	err := db.DB.Where("employee_id = ?", id).First(&emp).Error
