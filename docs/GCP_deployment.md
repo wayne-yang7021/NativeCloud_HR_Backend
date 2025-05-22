@@ -29,7 +29,9 @@ gcloud compute ssh native-cloud-hr --zone=asia-east1-c
 
 ```bash
 git clone https://github.com/your-username/NativeCloud_HR.git
-cd /opt/shared/NativeCloud_HR
+cd NativeCloud_HR
+sudo aqt install golang-go
+sudo apt install docker docker-compose
 ```
 
 #### 2.2. 更新專案程式碼
@@ -152,3 +154,4 @@ git push origin v1.0.0
 * 自動打包 image
 * 上傳 Docker Hub
 * 在 GCP VM 上自動重啟部署應用 🎉
+
