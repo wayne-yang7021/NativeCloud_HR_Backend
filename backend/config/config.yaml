@@ -12,3 +12,5 @@ messageQueue:
   type: "kafka"
   brokers:
     - "kafka:9092"
+  url: "http://35.229.242.253:8080/api/clock/"
+

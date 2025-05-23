@@ -28,16 +28,17 @@ type Config struct {
 	MessageQueue struct {
 		Type    string   `yaml:"type"`
 		Brokers []string `yaml:"brokers"`
+		URL     string   `yaml:"url"`
 	}
 }
 
 type KafkaConfig struct {
-	Brokers []string
+	Brokers string
 	Topic   string
 }
 
 var Kafka = KafkaConfig{
-	Brokers: []string{"kafka:9092"},
+	Brokers: "kafka:9092",
 	Topic:   "clock-records",
 }
 
