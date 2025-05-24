@@ -5,8 +5,15 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/4040www/NativeCloud_HR/config"
 	"github.com/gin-gonic/gin"
 )
+
+var cfg *config.Config
+
+func Init(c *config.Config) {
+	cfg = c
+}
 
 func CheckIn(c *gin.Context) {
 	bodyBytes, err := c.GetRawData()
@@ -15,7 +22,7 @@ func CheckIn(c *gin.Context) {
 		return
 	}
 
-	url := "http://35.229.242.253:8080/api/clock/"
+	url := cfg.MessageQueue.URL
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(bodyBytes))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "HTTP request failed"})
