@@ -8,6 +8,7 @@ pkg/
 
 # 環境變數
 .env
+.DS_Store
 
 # 編譯產物
 *.o
