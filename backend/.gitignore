@@ -3,7 +3,6 @@ bin/
 pkg/
 *.exe
 *.out
-*.test
 *.log
 
 # 環境變數
