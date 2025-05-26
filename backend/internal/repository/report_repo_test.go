@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/4040www/NativeCloud_HR/internal/db"
 	"github.com/4040www/NativeCloud_HR/internal/model"
 	"github.com/DATA-DOG/go-sqlmock"
 	"gorm.io/driver/postgres"
@@ -224,5 +225,121 @@ func TestGetAllEmployees(t *testing.T) {
 	// 確認所有預期操作都被使用
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+}
+
+func TestGetDepartmentsByManager(t *testing.T) {
+	dbMock, mock := setupMockDB(t)
+	db.DB = dbMock
+
+	mock.ExpectQuery(`SELECT distinct organization_id FROM "employee" WHERE employee_id = \$1`).
+		WithArgs("U001").
+		WillReturnRows(sqlmock.NewRows([]string{"organization_id"}).
+			AddRow("HR").
+			AddRow("Engineering"))
+
+	result, err := GetDepartmentsByManager("U001")
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	expected := []string{"HR", "Engineering"}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("expected %v, got %v", expected, result)
+	}
+
+	mock.ExpectQuery(`SELECT distinct organization_id FROM "employee" WHERE employee_id = \$1`).
+		WithArgs("U002").
+		WillReturnRows(sqlmock.NewRows([]string{"organization_id"})) // 空查詢
+
+	result, err = GetDepartmentsByManager("U002")
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	expected = []string{}
+	if result == nil {
+		result = []string{}
+	}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("expected %v, got %v", expected, result)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("mock expectations not met: %v", err)
+	}
+
+	mock.ExpectQuery(`SELECT distinct organization_id FROM "employee" WHERE employee_id = \$1`).
+		WithArgs("U003").
+		WillReturnError(errors.New("mock db error"))
+
+	_, err = GetDepartmentsByManager("U003")
+	if err == nil {
+		t.Errorf("expected error but got none")
+	}
+}
+
+func TestGetEmployeesByDepartment(t *testing.T) {
+	tests := []struct {
+		name       string
+		department string
+		setup      func(sqlmock.Sqlmock)
+		want       []model.Employee
+		wantErr    bool
+	}{
+		{
+			name:       "部門有員工",
+			department: "Engineering",
+			setup: func(mock sqlmock.Sqlmock) {
+				mock.ExpectQuery(`SELECT \* FROM "employee" WHERE organization_id = \$1`).
+					WithArgs("Engineering").
+					WillReturnRows(sqlmock.NewRows([]string{
+						"employee_id", "first_name", "last_name", "organization_id"}).
+						AddRow("E1", "Alice", "Wang", "Engineering").
+						AddRow("E2", "Bob", "Chen", "Engineering"))
+			},
+			want: []model.Employee{
+				{EmployeeID: "E1", FirstName: "Alice", LastName: "Wang", OrganizationID: "Engineering"},
+				{EmployeeID: "E2", FirstName: "Bob", LastName: "Chen", OrganizationID: "Engineering"},
+			},
+			wantErr: false,
+		},
+		{
+			name:       "部門無員工",
+			department: "HR",
+			setup: func(mock sqlmock.Sqlmock) {
+				mock.ExpectQuery(`SELECT \* FROM "employee" WHERE organization_id = \$1`).
+					WithArgs("HR").
+					WillReturnRows(sqlmock.NewRows([]string{
+						"employee_id", "first_name", "last_name", "organization_id"})) // 空
+			},
+			want:    []model.Employee{},
+			wantErr: false,
+		},
+		{
+			name:       "資料庫錯誤",
+			department: "Finance",
+			setup: func(mock sqlmock.Sqlmock) {
+				mock.ExpectQuery(`SELECT \* FROM "employee" WHERE organization_id = \$1`).
+					WithArgs("Finance").
+					WillReturnError(errors.New("mock db error"))
+			},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockDB, mock := setupMockDB(t)
+			db.DB = mockDB
+			tt.setup(mock)
+
+			got, err := GetEmployeesByDepartment(tt.department)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GetEmployeesByDepartment() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("GetEmployeesByDepartment() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }
