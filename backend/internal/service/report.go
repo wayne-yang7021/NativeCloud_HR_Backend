@@ -14,8 +14,13 @@ import (
 )
 
 // Get simple employee's attendance summary
+<<<<<<< HEAD
 func GetTodayAttendanceSummary(db *gorm.DB, userID string) (*model.AttendanceSummary, error) {
 	logs, err := FetchTodayRecords(db, userID)
+=======
+func GetTodayAttendanceSummary(userID string) (*model.AttendanceSummary, error) {
+	logs, err := FetchTodayRecords(userID)
+>>>>>>> architecture
 	if err != nil {
 		return nil, err
 	}
@@ -23,7 +28,11 @@ func GetTodayAttendanceSummary(db *gorm.DB, userID string) (*model.AttendanceSum
 		return nil, nil
 	}
 
+<<<<<<< HEAD
 	emp, err := repository.GetEmployeeByID(db, userID) // Modified to use the DB instance for unit tests
+=======
+	emp, err := repository.GetEmployeeByID(userID)
+>>>>>>> architecture
 	if err != nil {
 		return nil, err
 	}
@@ -74,13 +83,22 @@ func GetTodayAttendanceSummary(db *gorm.DB, userID string) (*model.AttendanceSum
 
 }
 
+<<<<<<< HEAD
 func GetAttendanceWithEmployee(db *gorm.DB, userID string, start, end time.Time) ([]model.AttendanceSummary, error) {
 	records, err := repository.GetAccessLogsByEmployeeBetween(db, userID, start, end.Add(24*time.Hour))
+=======
+func GetAttendanceWithEmployee(userID string, start, end time.Time) ([]model.AttendanceSummary, error) {
+	records, err := repository.GetAccessLogsByEmployeeBetween(userID, start, end.Add(24*time.Hour))
+>>>>>>> architecture
 	if err != nil {
 		return nil, err
 	}
 
+<<<<<<< HEAD
 	emp, err := repository.GetEmployeeByID(db, userID) // Modified to use the DB instance for unit tests
+=======
+	emp, err := repository.GetEmployeeByID(userID)
+>>>>>>> architecture
 	if err != nil {
 		return nil, err
 	}
@@ -131,7 +149,11 @@ func GetAttendanceWithEmployee(db *gorm.DB, userID string, start, end time.Time)
 
 }
 
+<<<<<<< HEAD
 func FetchTodayRecords(db *gorm.DB, employeeID string) ([]model.AccessLog, error) {
+=======
+func FetchTodayRecords(employeeID string) ([]model.AccessLog, error) {
+>>>>>>> architecture
 	today := time.Now()
 	start := time.Date(today.Year(), today.Month(), today.Day(), 0, 0, 0, 0, today.Location())
 	end := start.Add(24 * time.Hour)
@@ -302,13 +324,16 @@ func GenerateAlertList(db *gorm.DB, startDate, endDate string) ([]map[string]int
 				status = "Warning"
 			}
 
-			alerts = append(alerts, map[string]interface{}{
-				"EmployeeID": e.EmployeeID,
-				"Name":       e.FirstName + " " + e.LastName,
-				"OTCounts":   otCount,
-				"OTHours":    otHours,
-				"status":     status,
-			})
+			// 只加入 Warning 或 Alert
+			if status == "Warning" || status == "Alert" {
+				alerts = append(alerts, map[string]interface{}{
+					"EmployeeID": e.EmployeeID,
+					"Name":       e.FirstName + " " + e.LastName,
+					"OTCounts":   otCount,
+					"OTHours":    otHours,
+					"status":     status,
+				})
+			}
 		}
 	}
 
@@ -365,34 +390,55 @@ func GetAttendanceSummaryForDepartments(db *gorm.DB, department, startDate, endD
 	if err != nil {
 		return nil, err
 	}
+
 	start, _ := time.Parse("2006-01-02", startDate)
 	end, _ := time.Parse("2006-01-02", endDate)
 
+	// 建立從 start 到 end 的每一天清單
+	dates := []string{}
+	for d := start; !d.After(end); d = d.AddDate(0, 0, 1) {
+		dates = append(dates, d.Format("2006-01-02"))
+	}
+
 	var result []map[string]interface{}
 	for _, emp := range employees {
+<<<<<<< HEAD
 		logs, _ := repository.GetAccessLogsByEmployeeBetween(db, emp.EmployeeID, start, end.Add(24*time.Hour))
+=======
+		logs, _ := repository.GetAccessLogsByEmployeeBetween(emp.EmployeeID, start, end.Add(24*time.Hour))
+
+		// 將 logs 根據日期分組
+>>>>>>> architecture
 		dateMap := make(map[string][]model.AccessLog)
 		for _, r := range logs {
 			day := r.AccessTime.Format("2006-01-02")
 			dateMap[day] = append(dateMap[day], r)
 		}
-		for date, logs := range dateMap {
+
+		for _, date := range dates {
+			logs := dateMap[date]
 			var clockIn, clockOut *model.AccessLog
 			status := "On Time"
-			for _, log := range logs {
-				if log.Direction == "IN" && (clockIn == nil || log.AccessTime.Before(clockIn.AccessTime)) {
-					clockIn = &log
-					if log.AccessTime.Hour() > 8 || (log.AccessTime.Hour() == 8 && log.AccessTime.Minute() > 30) {
-						status = "Late"
+
+			if len(logs) == 0 {
+				status = "Day Off"
+			} else {
+				for _, log := range logs {
+					if log.Direction == "IN" && (clockIn == nil || log.AccessTime.Before(clockIn.AccessTime)) {
+						clockIn = &log
+					}
+					if log.Direction == "OUT" && (clockOut == nil || log.AccessTime.After(clockOut.AccessTime)) {
+						clockOut = &log
 					}
 				}
-				if log.Direction == "OUT" && (clockOut == nil || log.AccessTime.After(clockOut.AccessTime)) {
-					clockOut = &log
+
+				if clockIn == nil || clockOut == nil {
+					status = "Abnormal"
+				} else if clockIn.AccessTime.Hour() > 8 || (clockIn.AccessTime.Hour() == 8 && clockIn.AccessTime.Minute() > 30) {
+					status = "Late"
 				}
 			}
-			if clockIn == nil || clockOut == nil {
-				status = "Abnormal"
-			}
+
 			result = append(result, map[string]interface{}{
 				"date":         date,
 				"employeeID":   emp.EmployeeID,
@@ -405,11 +451,12 @@ func GetAttendanceSummaryForDepartments(db *gorm.DB, department, startDate, endD
 			})
 		}
 	}
+
 	// 排序：日期從新到舊
 	sort.Slice(result, func(i, j int) bool {
 		dateI, _ := time.Parse("2006-01-02", result[i]["date"].(string))
 		dateJ, _ := time.Parse("2006-01-02", result[j]["date"].(string))
-		return dateI.After(dateJ) // 最新的排前面
+		return dateI.After(dateJ)
 	})
 
 	return result, nil

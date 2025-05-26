@@ -3,10 +3,18 @@ bin/
 pkg/
 *.exe
 *.out
+<<<<<<< HEAD
+=======
+*.test
+>>>>>>> architecture
 *.log
 
 # 環境變數
 .env
+<<<<<<< HEAD
+=======
+.DS_Store
+>>>>>>> architecture
 
 # 編譯產物
 *.o

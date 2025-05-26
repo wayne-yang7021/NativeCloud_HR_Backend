@@ -39,6 +39,7 @@
 
 ## 📊 Grafana 操作指南
 
+<<<<<<< HEAD
 1. 啟動服務後，瀏覽器前往：[http://localhost:3000](http://localhost:3000)
 2. 預設帳密：
    - **帳號**：`admin`
@@ -102,6 +103,8 @@ docker exec -it kafka bash
 
 ## 📊 Grafana 操作指南
 
+=======
+>>>>>>> architecture
 1. 啟動服務後，瀏覽器前往：[http://service_ip:3000](http://service_ip:3000)
 2. 預設帳密：
    - **帳號**：`admin`
@@ -115,7 +118,11 @@ docker exec -it kafka bash
 
 ## 🔧 如何操作與測試 Kafka
 
+<<<<<<< HEAD
 ### 進入 Kafka container
+=======
+### 進入 Kafka container：
+>>>>>>> architecture
 
 ```bash
 docker exec -it kafka bash
@@ -149,7 +156,11 @@ kafka-console-consumer.sh --bootstrap-server kafka:9092 --topic my-topic --from-
 
 ## 🔍 查看 Metrics（Kafka Exporter）
 
+<<<<<<< HEAD
 Kafka Exporter 預設監聽在 [http://service_ip/metrics](http://service_ip:9308/metrics)，包含以下重要指標：
+=======
+Kafka Exporter 預設監聽在 [http://service_ip:9308/metrics](http://service_ip:9308/metrics)，包含以下重要指標：
+>>>>>>> architecture
 
 | 指標名稱                                   | 說明                         |
 | -------------------------------------- | -------------------------- |
@@ -173,7 +184,11 @@ docker compose up --build
 docker compose down
 ```
 
+<<<<<<< HEAD
 ### 若 port 被占用，可嘗試查看與釋放：
+=======
+### 若 port 被占用，可嘗試查看與釋放：https://chatgpt.com/c/67d52a6f-d32c-800b-a15a-57316c11441a
+>>>>>>> architecture
 
 ```bash
 sudo lsof -i :8080
@@ -186,12 +201,19 @@ docker rm -f <container_id>
 
 ```
 [GRAFANA] --> [PROMETHEUS] <-- [KAFKA-EXPORTER] <-- [KAFKA] <-- [APP]
+<<<<<<< HEAD
                                  
+=======
+                                  
+>>>>>>> architecture
 ```
 
 * `kafka-exporter` 定期從 Kafka 拉 Lag 資訊。
 * `prometheus` 拉取 `kafka-exporter` 和 `app` 的 metrics。
 * `grafana` 從 `prometheus` 可視化全部 metrics。
 * `app` 寫入 Kafka。
+<<<<<<< HEAD
 
 ---
+=======
+>>>>>>> architecture
