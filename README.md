@@ -1,183 +1,183 @@
-# NativeCloud_HR 系統架構與運作流程
+# NativeCloud_HR System Architecture and Workflow
 
-本專案是針對公司員工考勤與門禁系統設計的後端架構，主要包含以下幾個模組與層次，旨在實現高效、可擴展、並且高可用的系統架構。
+This project is designed as the backend architecture for the company’s employee attendance and access control system. It consists of multiple modules and layers, aiming to achieve efficiency, scalability, and high availability.
 
-## 目錄
+## Table of Contents
 
-1. [後端系統架構說明](#後端系統架構說明)
-2. [API 層](#api-層)
-3. [Message Queue 層 (Kafka / NATS)](#message-queue-層-kafka--nats)
-4. [資料庫相關 (PostgreSQL / Redis)](#資料庫相關-postgresql--redis)
-5. [系統架構](#系統架構)
-6. [異常處理與報表](#異常處理與報表)
+1. [Backend System Architecture Overview](#backend-system-architecture-overview)  
+2. [API Layer](#api-layer)  
+3. [Message Queue Layer (Kafka / NATS)](#message-queue-layer-kafka--nats)  
+4. [Database Layer (PostgreSQL / Redis)](#database-layer-postgresql--redis)  
+5. [System Architecture](#system-architecture)  
+6. [Error Handling and Reporting](#error-handling-and-reporting)  
 
-## 1. 後端系統架構說明
+---
+
+## 1. Backend System Architecture Overview
+
 ```
 📦 employee-access-system
-│── 📂 cmd                  # 入口點
-│   ├── 📝 main.go          # 主要執行程式
-│── 📂 config               # 設定檔
-│   ├── 📝 config.go        # 設定加載邏輯
-│   ├── 📝 config.yaml      # 設定檔案 (GCP, DB, Kafka 連線)
-│   ├── 📝 .env             # 環境變數
-│── 📂 internal             # 核心業務邏輯
-│   ├── 📂 api              # API 層
-│   │   ├── 📂 handlers.go  # HTTP 請求處理
-│   │   │   ├── 📝 auth.go      # 身分驗證
-│   │   │   ├── 📝 clock.go     # 打卡
-│   │   │   ├── 📝 notify.go    # 提醒通知
-│   │   │   ├── 📝 report.go    # 報表生成
-│   │   ├── 📂 routes.go  # HTTP 請求處理
-│   │   │   ├── 📝 auth_routes.go      # 身分驗證路徑
-│   │   │   ├── 📝 clock_routes.go     # 打卡路徑
-│   │   │   ├── 📝 notify_routes.go    # 提醒通知路徑
-│   │   │   ├── 📝 report_routes.go    # 報表生成路徑
-│   │   ├── 📝 middleware.go# 身分驗證中介軟體
-│   │   ├── 📝 router.go    # 設定 API 路由 (Echo/Gin)
-│   ├── 📂 db               # 資料庫初始化
-│   │   ├── 📝 postgres.go  # PostgreSQL 連線
-│   ├── 📂 messageQueue     # 負責消息隊列操作
-│   │   ├── 📝 kafka.go     # Kafka 配置與生產者
-│   │   ├── 📝 producer.go  # 發送消息的生產者
-│   │   ├── 📝 consumer.go  # 接收消息的消費者
-│   ├── 📂 repository       # 資料存取層
-│   │   │   ├── 📝 user_repo.go      # 身分驗證數據存取
-│   │   │   ├── 📝 clock_repo.go     # 打卡數據存取
-│   │   │   ├── 📝 notify_repo.go    # 提醒通知數據存取
-│   │   │   ├── 📝 report_repo.go    # 報表生成數據存取
-│   ├── 📂 service          # 服務層（業務邏輯）
-│   │   │   ├── 📝 auth.go      # 身分驗證服務
-│   │   │   ├── 📝 clock.go     # 打卡服務
-│   │   │   ├── 📝 notify.go    # 提醒通知服務
-│   │   │   ├── 📝 report.go    # 報表生成服務
-│   ├── 📂 utils            # 通用工具
-│   │   ├── 📝 jwt.go       # token 管理
-├── 📂 deployments          # 部署相關
-│── 📂 scripts              # 運維腳本（未完成）
-│   ├── 📝 migrate.sh       # 資料庫遷移
-│   ├── 📝 start.sh         # 啟動指令
-│── 📂 docs                 # 文件
-│   ├── 📝 API.md           # API 說明文件
-│   ├── 📝 architecture.md  # 系統架構說明
-│   ├── 📝 GCP_deployment.md# 上雲說明
-├── Dockerfile       # 容器化設定
-├── docker-compose.yml # 本地測試環境
-│── go.mod                  # Golang 依賴管理
-│── go.sum                  # Golang 依賴鎖定
-│── README.md               # 專案說明文件
+│── 📂 cmd                  # Entry point
+│   ├── 📝 main.go          # Main program
+│── 📂 config               # Configuration
+│   ├── 📝 config.go        # Config loader logic
+│   ├── 📝 config.yaml      # Config file (GCP, DB, Kafka connections)
+│   ├── 📝 .env             # Environment variables
+│── 📂 internal             # Core business logic
+│   ├── 📂 api              # API layer
+│   │   ├── 📂 handlers.go  # HTTP request handlers
+│   │   │   ├── 📝 auth.go      # Authentication
+│   │   │   ├── 📝 clock.go     # Clock-in/out
+│   │   │   ├── 📝 notify.go    # Notifications
+│   │   │   ├── 📝 report.go    # Reports
+│   │   ├── 📂 routes.go  # HTTP routes
+│   │   │   ├── 📝 auth_routes.go      # Auth routes
+│   │   │   ├── 📝 clock_routes.go     # Clock routes
+│   │   │   ├── 📝 notify_routes.go    # Notification routes
+│   │   │   ├── 📝 report_routes.go    # Report routes
+│   │   ├── 📝 middleware.go# Authentication middleware
+│   │   ├── 📝 router.go    # API router setup (Echo/Gin)
+│   ├── 📂 db               # Database initialization
+│   │   ├── 📝 postgres.go  # PostgreSQL connection
+│   ├── 📂 messageQueue     # Message queue operations
+│   │   ├── 📝 kafka.go     # Kafka config & producer
+│   │   ├── 📝 producer.go  # Message producer
+│   │   ├── 📝 consumer.go  # Message consumer
+│   ├── 📂 repository       # Data access layer
+│   │   │   ├── 📝 user_repo.go      # Auth data access
+│   │   │   ├── 📝 clock_repo.go     # Clock data access
+│   │   │   ├── 📝 notify_repo.go    # Notification data access
+│   │   │   ├── 📝 report_repo.go    # Report data access
+│   ├── 📂 service          # Service layer (business logic)
+│   │   │   ├── 📝 auth.go      # Authentication service
+│   │   │   ├── 📝 clock.go     # Clock service
+│   │   │   ├── 📝 notify.go    # Notification service
+│   │   │   ├── 📝 report.go    # Report service
+│   ├── 📂 utils            # Utilities
+│   │   ├── 📝 jwt.go       # Token management
+├── 📂 deployments          # Deployment configurations
+│── 📂 scripts              # DevOps scripts (in progress)
+│   ├── 📝 migrate.sh       # DB migrations
+│   ├── 📝 start.sh         # Startup script
+│── 📂 docs                 # Documentation
+│   ├── 📝 API.md           # API documentation
+│   ├── 📝 architecture.md  # System architecture notes
+│   ├── 📝 GCP_deployment.md# Cloud deployment guide
+├── Dockerfile       # Containerization settings
+├── docker-compose.yml # Local testing environment
+│── go.mod                  # Go module dependencies
+│── go.sum                  # Go module lock file
+│── README.md               # Project README
 ```
 
 ---
 
-## 2. 專案開啟（使用 Docker）
+## 2. Running the Project (Using Docker)
 
-若要快速啟動 `NativeCloud_HR` 專案的開發環境，建議使用 Docker 來建立本地測試環境。以下是步驟說明。
+To quickly spin up the `NativeCloud_HR` development environment, we recommend using Docker for local setup. Follow the steps below.
 
-### 2.1. 安裝 Docker 與 Docker Compose
+### 2.1.Install Docker and Docker Compose
 
-#### macOS / Windows：
+#### macOS / Windows:
+If you are using macOS or Windows, you **must install and run Docker Desktop** to manage Docker containers.
 
-若你是使用 macOS 或 Windows，**必須安裝並開啟 Docker Desktop** 才能運行 Docker 容器。
+Steps:
+1. Download and install Docker Desktop from the [official website](https://www.docker.com/products/docker-desktop/).  
+2. After installation, **ensure Docker Desktop is running** and can start containers.  
+3. Docker Compose is bundled with Docker Desktop, so no additional installation is needed.  
 
-請依照以下步驟進行：
+> 💡 **Note**: If Docker Desktop is not running, executing `docker-compose up --build` may result in an error: *Cannot connect to the Docker daemon*.
 
-1. 前往 [Docker Desktop 官網](https://www.docker.com/products/docker-desktop/) 下載並安裝對應作業系統的 Docker Desktop。
-2. 安裝完成後，**請確認 Docker Desktop 已啟動**，並可正常執行容器。
-3. Docker Compose 通常會隨 Docker Desktop 一起安裝，無需額外安裝。
+#### Linux:
+On Linux, this project has been tested without Docker Desktop. You only need Docker Engine and Docker Compose.  
 
-> 💡 **注意**：如未啟動 Docker Desktop，執行 `docker-compose up --build` 可能會出現找不到 Docker daemon 的錯誤。
+- [Docker installation guide](https://docs.docker.com/engine/install/)  
+- [Docker Compose installation guide](https://docs.docker.com/compose/install/)  
 
-####  Linux：
+---
 
-本專案已在 Linux 環境中測試通過，**不需要額外安裝 Docker Desktop**，只需安裝 Docker Engine 與 Docker Compose 即可。
 
-請參考以下官方指引安裝：
+### 2.2. Install Go
 
-* 安裝 Docker：[Docker 安裝指南](https://docs.docker.com/engine/install/)
-* 安裝 Docker Compose：[Docker Compose 安裝指南](https://docs.docker.com/compose/install/)
+Make sure [Go](https://go.dev/doc/install) is installed and your environment variables are configured.
 
-### 2.2. 安裝 Go 環境
+⚠️ **Tip**: Run `go mod tidy` in your **local terminal**, not in VS Code’s integrated terminal, to avoid dependency fetching errors.
 
-請確保系統已安裝 [Go](https://go.dev/doc/install) 並設置好環境變數。
-
-⚠️ **建議在「本機終端機」執行 `go mod tidy`，不要在 VS Code 內建終端機執行，避免依賴拉取錯誤。**
 
 ```bash
 go version   # 確認 Go 已正確安裝
 ```
 
-### 2.3. 克隆專案
-
-將專案代碼克隆到本地端：
+### 2.3. Clone the Repository
 
 ```bash
 git clone https://github.com/4040www/NativeCloud_HR.git
 cd NativeCloud_HR
 ```
 
-### 2.4. 配置 `.env` 環境變數
+### 2.4. Configure `.env` Variables
 
-請在 `config/` 資料夾下**直接建立一個 `.env` 檔案**，不可放在 `.env/` 子資料夾中。
+Create a `.env` file directly inside the `config/` folder (not inside a subfolder).
 
-你可以參考 `config/.env.example` 來設定：
+Use `config/.env.example` as reference:
 
 ```bash
 # config/.env
 DB_HOST = 35.221.151.72
-DB_USER =（補）
-DB_PASSWORD =（補）
-DB_NAME =（補）
+DB_USER = (your_username)
+DB_PASSWORD = (your_password)
+DB_NAME = (your_db_name)
 DB_PORT = 5432
 
-JWT_SECRET=（補）
+JWT_SECRET = (your_secret)
 ```
 
-⚠️ 請確保資料庫連線資訊為**最新版本**，如有更新請依最新提供的設定檔為主。
+⚠️ Make sure the DB connection information is up to date.
 
-### 2.5. 下載依賴並啟動 Docker 容器
+### 2.5. Install Dependencies and Start Docker Containers
 
 ```bash
 go mod tidy
 docker-compose up --build
 ```
 
-此命令會根據 `docker-compose.yml` 配置，建立並啟動容器，包含：
+This will start containers based on `docker-compose.yml`, including:
 
 * API server
-* PostgreSQL 資料庫
-* Kafka message queue（如有）
+* PostgreSQL database
+* Kafka message queue (if configured)
 
-### 2.6. 訪問應用
+### 2.6. Access the Application
 
-* 本地 API 端點：`http://localhost:8080`
-* 健康檢查 API：`http://localhost:8080/api/status`
+* Local API endpoint:：`http://localhost:8080`
+* Health check API：`http://localhost:8080/api/status`
 
-你可使用 Postman 等工具測試 API，包含：
+You can use Postman or similar tools to test endpoints such as:
 
-* 身分驗證
-* 打卡功能
-* 提醒通知
-* 報表生成等
+* Authentication
+* Clock-in/out
+* Notifications
+* Reports
 
-### 2.7. 資料庫遷移
+### 2.7. Database Migration
 
 ```bash
 docker-compose exec app ./scripts/migrate.sh
 ```
 
-執行後會自動更新資料表結構至最新版本。
+This updates the database schema to the latest version.
 
-### 2.8. 停止容器
+### 2.8. Stop Containers
 
 ```bash
 docker-compose down
 ```
 
-### 2.9. 查看日誌
+### 2.9. View Logs
 
 ```bash
 docker-compose logs -f
 ```
 
-這將顯示即時的運行紀錄，便於 debug。
+This displays real-time logs for debugging.
 
